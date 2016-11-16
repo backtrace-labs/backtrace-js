@@ -5,5 +5,10 @@
   "description": "Backtrace.io error reporting tool for client-side applications",
   "main": "index.js",
   "author": "Andrew Kelley <akelley@backtrace.io>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "browserify": "~13.1.1",
+    "serve-static": "~1.11.1",
+    "streamsink": "~1.2.0"
+  }
 }
