@@ -16,3 +16,11 @@ bt.initialize({
 // Later, when you have an error:
 bt.report(new Error("something broke"));
 ```
+
+## Testing
+
+```
+npm install
+./node_modules/.bin/browserify test/app.js --outfile test/out.js
+node test/server.js
+```
