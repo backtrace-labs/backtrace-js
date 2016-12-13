@@ -2,7 +2,7 @@
   "name": "backtrace-js",
   "version": "0.0.2",
   "description": "Backtrace.io error reporting tool for client-side applications",
-  "main": "index.js",
+  "main": "lib/index.js",
   "author": "Andrew Kelley <akelley@backtrace.io>",
   "license": "MIT",
   "devDependencies": {
