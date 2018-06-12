@@ -4,7 +4,7 @@ bt.initialize({
   endpoint: "http://localhost:11369"
   // sampling: 0.25,  // Should send 25/100 caught errors
   // filter: function(report) {
-  //   if (report.attributes["error.message"] == "Script Error.") {
+  //   if (report.attributes["error.message"] == "Script error.") {
   //     var shouldSend = Math.random() >= 0.5;
   //     return shouldSend;
   //   }
