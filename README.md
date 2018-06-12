@@ -36,11 +36,12 @@ In Addition to all [backtrace-node](https://github.com/backtrace-labs/backtrace-
 ##### `sampling`
 Optional.
 Sets a percentage of reports which should be send.
-For example, `sampling: 0.25` would send 25/100 of reports/
+For example, `sampling: 0.25` would send 25/100 of reports.
 
 ##### `filter`
 Optional.
 Set a pre-send function which allows custom filtering of reports.
+This function accepts the backtrace report object and should return `true` if the report SHOULD be sent or return `false` if the report should NOT be sent.
 
 Example: 
 ```
