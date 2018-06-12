@@ -46,7 +46,7 @@ This function accepts the backtrace report object and should return `true` if th
 Example: 
 ```
 filter: function(report) {
-  if (report.attributes["error.message"] == "Script Error.") {
+  if (report.attributes["error.message"] == "Script error.") {
     return  Math.random() >= 0.5;  // Sample half of this kind of report
   }
   return true;  // Otherwise, always send the report
