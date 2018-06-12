@@ -21,6 +21,38 @@ bt.report(new Error('something broke'));
 
 See [backtrace-node](https://github.com/backtrace-labs/backtrace-node#documentation)'s documentation.
 
+### bt.initialize([options])
+
+This is intended to be one of the first things your application does during
+initialization. It registers a handler for `uncaughtException` which will
+spawn a detached child process to perform the error report and then crash
+in the same way that your application would have crashed without the handler.
+
+#### Options
+See [backtrace-node](https://github.com/backtrace-labs/backtrace-node#documentation)'s documentation for the complete options list.
+
+In addition to all [backtrace-node](https://github.com/backtrace-labs/backtrace-node#documentation)'s options, Backtrace-JS includes `sampling` and `filter`.
+
+##### `sampling`
+Optional.
+Sets a percentage of reports which should be sent.
+For example, `sampling: 0.25` would send 25/100 reports.
+
+##### `filter`
+Optional.
+Set a pre-send function which allows custom filtering of reports.
+This function accepts the backtrace report object and should return `true` if the report SHOULD be sent or return `false` if the report should NOT be sent.
+
+Example: 
+```
+filter: function(report) {
+  if (report.attributes["error.message"] == "Script Error.") {
+    return  Math.random() >= 0.5;  // Sample half of this kind of report
+  }
+  return true;  // Otherwise, always send the report
+}
+```
+
 ## Testing
 
 ```
