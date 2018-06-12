@@ -12,8 +12,6 @@ bt.initialize({
   // }
 });
 
-bt.report(new Error("Script Error."));
-
 var btnDom = document.getElementById("error-button");
 
 btnDom.addEventListener("click", onBtnClick, false);
