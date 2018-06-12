@@ -31,12 +31,12 @@ in the same way that your application would have crashed without the handler.
 #### Options
 See [backtrace-node](https://github.com/backtrace-labs/backtrace-node#documentation)'s documentation for the complete options list.
 
-In Addition to all [backtrace-node](https://github.com/backtrace-labs/backtrace-node#documentation)'s options, Backtrace-JS includes `sampling` and `filter`.
+In addition to all [backtrace-node](https://github.com/backtrace-labs/backtrace-node#documentation)'s options, Backtrace-JS includes `sampling` and `filter`.
 
 ##### `sampling`
 Optional.
-Sets a percentage of reports which should be send.
-For example, `sampling: 0.25` would send 25/100 of reports.
+Sets a percentage of reports which should be sent.
+For example, `sampling: 0.25` would send 25/100 reports.
 
 ##### `filter`
 Optional.
@@ -49,7 +49,7 @@ filter: function(report) {
   if (report.attributes["error.message"] == "Script Error.") {
     return  Math.random() >= 0.5;  // Sample half of this kind of report
   }
-  return true;
+  return true;  // Otherwise, always send the report
 }
 ```
 
