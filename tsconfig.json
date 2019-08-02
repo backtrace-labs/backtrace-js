@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "stripInternal": true,
+    "target": "es2019",
+    "lib": ["es2019", "dom"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "./lib",
+    "strict": true,
+    "declaration": true,
+    "typeRoots": ["./node_modules/@types", "./source/types"],
+    "esModuleInterop": true
+  },
+  "exclude": ["lib", "./test", "./examples"]
+}
