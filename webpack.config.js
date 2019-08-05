@@ -1,6 +1,5 @@
 const path = require('path');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const nodeExternals = require('webpack-node-externals');
 
 const config = {
   mode: 'development',
@@ -8,7 +7,6 @@ const config = {
     app: path.resolve(__dirname, 'source/index.ts'),
   },
   target: 'web',
-  externals: [nodeExternals()],
   output: {
     path: path.resolve(__dirname, 'lib'),
     filename: '[name].js',
@@ -29,7 +27,7 @@ const config = {
     ],
   },
   resolve: {
-    extensions: ['.ts', '.tsx'],
+    extensions: ['.ts', '.tsx', '.js'],
     alias: {
       '@src': path.resolve('source'),
     },

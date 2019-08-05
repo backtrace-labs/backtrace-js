@@ -12,5 +12,4 @@ export interface IBacktraceData {
   annotations: { [index: string]: any };
   threads: object;
   classifiers: string[];
-  sourceCode: { [index: string]: ISourceCode };
 }

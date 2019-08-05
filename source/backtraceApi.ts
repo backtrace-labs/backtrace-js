@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { EventEmitter } from 'events';
-import FormData from 'form-data';
+// import FormData from 'form-data';
 
-import { IBacktraceData } from '@src/model/backtraceData';
+// import { IBacktraceData } from '@src/model/backtraceData';
 import { BacktraceReport } from '@src/model/backtraceReport';
 import { BacktraceResult } from '@src/model/backtraceResult';
 import stringify from 'json-stringify-safe';
@@ -14,13 +14,14 @@ export class BacktraceApi extends EventEmitter {
 
   public async send(report: BacktraceReport): Promise<BacktraceResult> {
     const data = await report.toJson();
+    console.log(data.annotations);
+    console.log(JSON.stringify(data));
     this.emit('before-data-send', report, data);
-    const formData = await this.getFormData(data);
     try {
-      const result = await axios.post(this.backtraceUri, formData, {
+      const result = await axios.post(this.backtraceUri + '&_mod_sync=1', stringify(data), {
         timeout: this.timeout,
         headers: {
-          'Content-Type': `multipart/form-data; boundary=${formData.getBoundary()}`,
+          'Content-Type': `application/json`,
         },
       });
       if (result.status !== 200) {
@@ -33,10 +34,10 @@ export class BacktraceApi extends EventEmitter {
     }
   }
 
-  private async getFormData(data: IBacktraceData): Promise<FormData> {
-    const formData = new FormData();
-    const json: string = stringify(data);
-    formData.append('upload_file', json, 'upload_file.json');
-    return formData;
-  }
+  // private async getFormData(data: IBacktraceData): Promise<FormData> {
+  //   const formData = new FormData();
+  //   const json: string = stringify(data);
+  //   formData.append('upload_file', json, 'upload_file.json');
+  //   return formData;
+  // }
 }

@@ -23,7 +23,7 @@ export class BacktraceReport {
   // Backtrace-node  version
   public readonly agentVersion = packageJson.version;
   // main thread name
-  public readonly mainThread = 'default';
+  public readonly mainThread = 'main';
 
   public classifiers: string[] = [];
 
@@ -152,7 +152,6 @@ export class BacktraceReport {
       agentVersion: this.agentVersion,
       annotations: this.annotations,
       attributes: this.attributes,
-      sourceCode: this.stackTrace.getSourceCode(),
     };
   }
 
@@ -258,12 +257,7 @@ export class BacktraceReport {
   }
 
   private readAnnotation(): object {
-    const result: { [index: string]: any } = {};
-
-    if (this.detectReportType(this.err)) {
-      result['Exception'] = this.err;
-    }
-    return { ...result, ...this.annotations, ...navigator.geolocation, ...window.screen };
+    return { Geolocation: navigator.geolocation, Screen: window.screen, Exception: this.err, ...this.annotations };
   }
 
   private splitAttributesFromAnnotations(clientAttributes: { [index: string]: any }) {
