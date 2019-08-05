@@ -14,11 +14,9 @@ export class BacktraceApi extends EventEmitter {
 
   public async send(report: BacktraceReport): Promise<BacktraceResult> {
     const data = await report.toJson();
-    console.log(data.annotations);
-    console.log(JSON.stringify(data));
     this.emit('before-data-send', report, data);
     try {
-      const result = await axios.post(this.backtraceUri + '&_mod_sync=1', stringify(data), {
+      const result = await axios.post(this.backtraceUri, stringify(data), {
         timeout: this.timeout,
         headers: {
           'Content-Type': `application/json`,
