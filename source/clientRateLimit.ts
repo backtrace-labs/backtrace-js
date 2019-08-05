@@ -1,4 +1,4 @@
-import { BacktraceReport } from './model/backtraceReport';
+import { BacktraceReport } from '@src/model/backtraceReport';
 
 export class ClientRateLimit {
   private readonly _watcherEnable: boolean;

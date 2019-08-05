@@ -4,7 +4,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const config = {
   mode: 'development',
   entry: {
-    app: path.resolve(__dirname, 'source/index.ts'),
+    app: path.resolve(__dirname, './source/index.ts'),
   },
   target: 'web',
   output: {
@@ -23,17 +23,21 @@ const config = {
         loader: 'ts-loader',
         options: {
           transpileOnly: true,
-          appendTsSuffixTo: [/\.vue$/],
         },
       },
     ],
   },
   resolve: {
-    extensions: ['.ts', '.tsx'],
+    extensions: ['.ts'],
+    alias: {
+      '@src': path.resolve('src'),
+    },
   },
   plugins: [
     new ForkTsCheckerWebpackPlugin({
       tslint: true,
+      workers: 2,
+      useTypescriptIncrementalApi: false,
     }),
   ],
 };

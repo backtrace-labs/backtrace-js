@@ -1,10 +1,10 @@
+import { BacktraceApi } from '@src/backtraceApi';
+import { ClientRateLimit } from '@src/clientRateLimit';
+import { BacktraceClientOptions, IBacktraceClientOptions } from '@src/model/backtraceClientOptions';
+import { IBacktraceData } from '@src/model/backtraceData';
+import { BacktraceReport } from '@src/model/backtraceReport';
+import { BacktraceResult } from '@src/model/backtraceResult';
 import { EventEmitter } from 'events';
-import { BacktraceApi } from './backtraceApi';
-import { ClientRateLimit } from './clientRateLimit';
-import { BacktraceClientOptions, IBacktraceClientOptions } from './model/backtraceClientOptions';
-import { IBacktraceData } from './model/backtraceData';
-import { BacktraceReport } from './model/backtraceReport';
-import { BacktraceResult } from './model/backtraceResult';
 /**
  * Backtrace client
  */
@@ -53,14 +53,10 @@ export class BacktraceClient extends EventEmitter {
     return this._memorizedAttributes;
   }
 
-  public createReport(
-    payload: Error | string,
-    reportAttributes: object | undefined = {},
-    fileAttachments: string[] = [],
-  ): BacktraceReport {
+  public createReport(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceReport {
     this.emit('new-report', payload, reportAttributes);
     const attributes = this.combineClientAttributes(reportAttributes);
-    const report = new BacktraceReport(payload, attributes, fileAttachments);
+    const report = new BacktraceReport(payload, attributes);
     report.setSourceCodeOptions(this.options.tabWidth, this.options.contextLineCount);
     return report;
   }
@@ -68,14 +64,12 @@ export class BacktraceClient extends EventEmitter {
    * Send report asynchronously to Backtrace
    * @param payload report payload
    * @param reportAttributes attributes
-   * @param fileAttachments file attachments paths
    */
   public async reportAsync(
     payload: Error | string,
     reportAttributes: object | undefined = {},
-    fileAttachments: string[] = [],
   ): Promise<BacktraceResult> {
-    const report = this.createReport(payload, reportAttributes, fileAttachments);
+    const report = this.createReport(payload, reportAttributes);
     this.emit('before-send', report);
     const limitResult = this.testClientLimits(report);
     if (limitResult) {
@@ -90,14 +84,9 @@ export class BacktraceClient extends EventEmitter {
    * Send report synchronosuly to Backtrace
    * @param payload report payload - error or string
    * @param reportAttributes attributes
-   * @param fileAttachments file attachments paths
    */
-  public reportSync(
-    payload: Error | string,
-    reportAttributes: object | undefined = {},
-    fileAttachments: string[] = [],
-  ): BacktraceResult {
-    const report = this.createReport(payload, reportAttributes, fileAttachments);
+  public reportSync(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceResult {
+    const report = this.createReport(payload, reportAttributes);
     return this.sendReport(report);
   }
 

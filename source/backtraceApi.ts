@@ -2,10 +2,10 @@ import axios from 'axios';
 import { EventEmitter } from 'events';
 import FormData from 'form-data';
 
+import { IBacktraceData } from '@src/model/backtraceData';
+import { BacktraceReport } from '@src/model/backtraceReport';
+import { BacktraceResult } from '@src/model/backtraceResult';
 import stringify from 'json-stringify-safe';
-import { IBacktraceData } from './model/backtraceData';
-import { BacktraceReport } from './model/backtraceReport';
-import { BacktraceResult } from './model/backtraceResult';
 
 export class BacktraceApi extends EventEmitter {
   constructor(private backtraceUri: string, private timeout: number) {

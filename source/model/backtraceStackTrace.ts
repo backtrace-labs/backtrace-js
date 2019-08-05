@@ -1,6 +1,4 @@
-import * as fs from 'fs';
-import { scanFile } from 'source-scan';
-import { ISourceCode, ISourceLocation, ISourceScan } from './sourceCode';
+import { ISourceCode, ISourceLocation } from '@src/model/sourceCode';
 
 /**
  * Reprresent single stack frame in stack trace
@@ -23,7 +21,6 @@ export class BacktraceStackTrace {
   public stack: IBacktraceStackFrame[] = [];
 
   public sourceCodeInformation: { [index: string]: ISourceCode } = {};
-  private callingModulePath = '';
   private readonly stackLineRe = /\s+at (.+) \((.+):(\d+):(\d+)\)/;
   private requestedSourceCode: { [index: string]: ISourceLocation[] } = {};
 
@@ -42,20 +39,6 @@ export class BacktraceStackTrace {
   public setSourceCodeOptions(tabWidth: number, contextLineCount: number) {
     this.tabWidth = tabWidth;
     this.contextLineCount = contextLineCount;
-  }
-
-  /**
-   * Get calling module path
-   */
-  public getCallingModulePath(): string | undefined {
-    if (!this.stack || this.stack.length === 0) {
-      return undefined;
-    }
-    // handle a situation when every one stack frame is from node_modules
-    if (!this.callingModulePath) {
-      this.callingModulePath = this.stack[0].sourceCode;
-    }
-    return this.callingModulePath;
   }
 
   /**
@@ -105,74 +88,16 @@ export class BacktraceStackTrace {
       };
 
       this.addSourceRequest(stackFrame);
-      if (this.isCallingModule(stackFrame)) {
-        this.callingModulePath = stackFrame.sourceCode;
-      }
       this.stack.push(stackFrame);
     });
-
-    // read source code information after reading all existing stack frames from stack trace
-    await this.readSourceCode();
   }
 
   private addSourceRequest(stackFrame: IBacktraceStackFrame): void {
-    // ignore not existing stack frames
-    if (!fs.existsSync(stackFrame.sourceCode)) {
-      return;
-    }
     // add source code to existing list. Otherwise create empty array
     this.requestedSourceCode[stackFrame.sourceCode] = this.requestedSourceCode[stackFrame.sourceCode] || [];
     this.requestedSourceCode[stackFrame.sourceCode].push({
       line: stackFrame.line,
       column: stackFrame.column,
     });
-  }
-
-  private async readSourceCode(): Promise<void> {
-    for (const key in this.requestedSourceCode) {
-      if (this.requestedSourceCode.hasOwnProperty(key)) {
-        const element = this.requestedSourceCode[key];
-
-        let minLine = element[0].line;
-        let maxLine = minLine;
-        for (let i = 1; i < element.length; i += 1) {
-          const item = element[i];
-          minLine = Math.min(minLine, item.line);
-          maxLine = Math.max(maxLine, item.line);
-        }
-
-        const parameter = {
-          startLine: Math.max(minLine - this.contextLineCount, 0),
-          endLine: maxLine + this.contextLineCount,
-          filePath: key,
-        };
-        const res = await this.getSourceCodeInformation(parameter);
-        this.sourceCodeInformation[key] = res;
-      }
-    }
-  }
-
-  private async getSourceCodeInformation(parameter: ISourceScan): Promise<ISourceCode> {
-    return new Promise<ISourceCode>((res, rej) => {
-      scanFile(parameter, (err: Error, buff: Buffer) => {
-        if (err) {
-          rej(err);
-          return;
-        }
-        res({
-          path: parameter.filePath,
-          startLine: parameter.startLine,
-          startColumn: 1,
-          text: buff.toString('utf8'),
-          tabWidth: this.tabWidth,
-        });
-      });
-    });
-  }
-
-  private isCallingModule(stackFrame: IBacktraceStackFrame): boolean {
-    return (
-      !this.callingModulePath && fs.existsSync(stackFrame.sourceCode) && !stackFrame.sourceCode.includes('node_modules')
-    );
   }
 }

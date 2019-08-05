@@ -1,16 +1,16 @@
-import { BacktraceClient } from './backtraceClient';
+import { BacktraceClient } from '@src/backtraceClient';
+import * as btReport from '@src/model/backtraceReport';
+import { BacktraceResult } from '@src/model/backtraceResult';
 import { BacktraceClientOptions, IBacktraceClientOptions } from './model/backtraceClientOptions';
-import * as btReport from './model/backtraceReport';
-import { BacktraceResult } from './model/backtraceResult';
-export { IBacktraceData } from './model/backtraceData';
+export { IBacktraceData } from '@src/model/backtraceData';
 
 export const pageStartTime = new Date();
 
 let backtraceClient: BacktraceClient;
 
-export { BacktraceClient } from './backtraceClient';
-export { BacktraceReport as BtReport } from './model/backtraceReport';
-export { BacktraceClientOptions, IBacktraceClientOptions } from './model/backtraceClientOptions';
+export { BacktraceClient } from '@src/backtraceClient';
+export { BacktraceReport as BtReport } from '@src/model/backtraceReport';
+export { BacktraceClientOptions, IBacktraceClientOptions } from '@src/model/backtraceClientOptions';
 /**
  * Initalize Backtrace Client and Backtrace node integration
  * @param configuration Bcktrace configuration
@@ -34,12 +34,10 @@ export function use(client: BacktraceClient) {
  * Send report asynchronously to Backtrace
  * @param arg report payload
  * @param arg2 attributes
- * @param arg3 file attachments paths
  */
 export async function report(
   arg: () => void | Error | string | object,
   arg2: object | undefined = {},
-  arg3: string[] = [],
 ): Promise<BacktraceResult> {
   if (!backtraceClient) {
     throw new Error('Must call initialize method first');
@@ -51,7 +49,7 @@ export async function report(
   if (typeof arg === 'object' && arg2 === {}) {
     arg2 = arg;
   }
-  const result = await backtraceClient.reportAsync(data, arg2, arg3);
+  const result = await backtraceClient.reportAsync(data, arg2);
   if (arg instanceof Function) {
     arg();
   }
@@ -62,17 +60,12 @@ export async function report(
  * Send report synchronosuly to Backtrace
  * @param error report payload
  * @param reportAttributes attributes
- * @param attachments file attachments paths
  */
-export function reportSync(
-  data: Error | string,
-  attributes: object | undefined = {},
-  attachments: string[] = [],
-): BacktraceResult {
+export function reportSync(data: Error | string, attributes: object | undefined = {}): BacktraceResult {
   if (!backtraceClient) {
     throw new Error('Must call initialize method first');
   }
-  return backtraceClient.reportSync(data, attributes, attachments);
+  return backtraceClient.reportSync(data, attributes);
 }
 
 /**

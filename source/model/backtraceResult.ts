@@ -1,4 +1,4 @@
-import { BacktraceReport } from './backtraceReport';
+import { BacktraceReport } from '@src/model/backtraceReport';
 
 export enum BacktraceResultStatus {
   /**

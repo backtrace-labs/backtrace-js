@@ -1,11 +1,11 @@
 // tslint:disable-next-line: no-var-requires
-const packageJson = require('./../../package.json');
-import { pseudoRandomBytes } from 'crypto';
-import { pageStartTime } from '..';
-import { readModule, readModuleDependencies } from '../helpers/moduleResolver';
-import { IBacktraceData } from './backtraceData';
-import { BacktraceStackTrace } from './backtraceStackTrace';
+const packageJson = require('@src/../../package.json');
 
+import { IBacktraceData } from '@src/model/backtraceData';
+import { BacktraceStackTrace } from '@src/model/backtraceStackTrace';
+import { pageStartTime } from '..';
+
+const crypto = window.crypto;
 /**
  * BacktraceReport describe current exception/message payload message to Backtrace
  */
@@ -78,20 +78,12 @@ export class BacktraceReport {
    *
    * @param err Error or message - content to report
    * @param attributes Report attributes dictionary
-   * @param attachments Report attachments that Backtrace will send to API
    */
-  constructor(
-    private err: Error | string = '',
-    private clientAttributes: { [index: string]: any } = {},
-    private attachments: string[] = [],
-  ) {
+  constructor(private err: Error | string = '', private clientAttributes: { [index: string]: any } = {}) {
     if (!clientAttributes) {
       clientAttributes = {};
     }
     this.splitAttributesFromAnnotations(clientAttributes);
-    if (!attachments) {
-      attachments = [];
-    }
     this.setError(err);
   }
   /**
@@ -149,10 +141,6 @@ export class BacktraceReport {
     this.annotations[key] = value;
   }
 
-  public getAttachments(): string[] {
-    return this.attachments;
-  }
-
   public async toJson(): Promise<IBacktraceData> {
     // why library should wait to retrieve source code data?
     // architecture decision require to pass additional parameters
@@ -185,8 +173,6 @@ export class BacktraceReport {
     this.stackTrace = new BacktraceStackTrace(this.err);
     this.stackTrace.setSourceCodeOptions(this.tabWidth, this.contextLineCount);
     await this.stackTrace.parseStackFrames();
-    // retrieve calling module object
-    [this._callingModule, this._callingModulePath] = readModule(this.stackTrace.getCallingModulePath());
 
     // combine attributes
     this.attributes = {
@@ -209,18 +195,34 @@ export class BacktraceReport {
   }
 
   private generateUuid(): string {
-    const bytes = pseudoRandomBytes(16);
-    return (
-      bytes.slice(0, 4).toString('hex') +
-      '-' +
-      bytes.slice(4, 6).toString('hex') +
-      '-' +
-      bytes.slice(6, 8).toString('hex') +
-      '-' +
-      bytes.slice(8, 10).toString('hex') +
-      '-' +
-      bytes.slice(10, 16).toString('hex')
-    );
+    const uuidArray = new Uint8Array(16);
+    crypto.getRandomValues(uuidArray);
+    const hexStr = (b: number) => {
+      const s = b.toString(16);
+      return b < 0x10 ? '0' + s : s;
+    };
+    let result = '';
+    let i = 0;
+    for (; i < 4; i += 1) {
+      result += hexStr(uuidArray[i]);
+    }
+    result += '-';
+    for (; i < 6; i += 1) {
+      result += hexStr(uuidArray[i]);
+    }
+    result += '-';
+    for (; i < 8; i += 1) {
+      result += hexStr(uuidArray[i]);
+    }
+    result += '-';
+    for (; i < 10; i += 1) {
+      result += hexStr(uuidArray[i]);
+    }
+    result += '-';
+    for (; i < 16; i += 1) {
+      result += hexStr(uuidArray[i]);
+    }
+    return result;
   }
 
   private readErrorAttributes(): object {
@@ -236,7 +238,6 @@ export class BacktraceReport {
   }
 
   private readAttributes(): object {
-    const mem = process.memoryUsage();
     const { name, version, main, description, author } = (this._callingModule || {}) as any;
     const result = {
       'process.age': Math.floor((new Date().getTime() - pageStartTime.getTime()) / 1000),
@@ -254,11 +255,7 @@ export class BacktraceReport {
   }
 
   private readAnnotation(): object {
-    const result = {
-      'Environment Variables': process.env,
-      'Exec Arguments': process.execArgv,
-      Dependencies: readModuleDependencies(this._callingModulePath),
-    } as any;
+    const result: { [index: string]: any } = {};
 
     if (this.detectReportType(this.err)) {
       result['Exception'] = this.err;
