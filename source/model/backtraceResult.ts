@@ -21,6 +21,10 @@ export enum BacktraceResultStatus {
    * Data were send to API and waiting for server result
    */
   InProcessing = 8,
+  /**
+   * Filter function hit
+   */
+  FilterHit = 16,
 }
 
 /**
@@ -57,6 +61,9 @@ export class BacktraceResult {
     return new BacktraceResult(report, 'Sampling hit', BacktraceResultStatus.SamplingHit);
   }
 
+  public static OnFilterHit(report: BacktraceReport): BacktraceResult {
+    return new BacktraceResult(report, 'Filter hit', BacktraceResultStatus.FilterHit);
+  }
   /**
    * Set result when error occurs while sending data to API
    * @param report Executed report

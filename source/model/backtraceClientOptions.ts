@@ -1,30 +1,58 @@
+import { BacktraceReport } from './backtraceReport';
+
 export class BacktraceClientOptions implements IBacktraceClientOptions {
   public timeout: number = 15000;
   public endpoint!: string;
   public token?: string;
-  public attributes: object = {};
+  public userAttributes: object = {};
 
   public disableGlobalHandler: boolean = false;
   public handlePromises: boolean = false;
-  public allowMultipleUncaughtExceptionListeners: boolean = false;
-
-  public tabWidth: number = 8;
-  public contextLineCount: number = 200;
 
   public sampling: number | undefined = undefined;
   public rateLimit: number = 0;
+  public filter?: (report: BacktraceReport) => boolean = undefined;
+
+  /**
+   * @deprecated
+   * Please don't use this option anymore
+   */
+  public debugBacktrace?: boolean = false;
+  /**
+   * @deprecated
+   * Please don't use this option anymore
+   */
+  public tabWidth: number = 8;
+  /**
+   * @deprecated
+   * Please don't use this option anymore
+   */
+  public contextLineCount: number = 200;
 }
 
 export interface IBacktraceClientOptions {
+  /**
+   * @deprecated
+   * Please don't use this option anymore
+   */
+  debugBacktrace?: boolean;
   timeout?: number;
   endpoint: string;
   token?: string;
-  attributes?: object;
+  userAttributes?: object;
   disableGlobalHandler?: boolean;
   handlePromises?: boolean;
-  allowMultipleUncaughtExceptionListeners?: boolean;
+  /**
+   * @deprecated
+   * Please don't use this option anymore
+   */
   tabWidth?: number;
+  /**
+   * @deprecated
+   * Please don't use this option anymore
+   */
   contextLineCount?: number;
   sampling?: number | undefined;
   rateLimit?: number;
+  filter?: (report: BacktraceReport) => boolean;
 }

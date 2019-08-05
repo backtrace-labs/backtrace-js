@@ -91,6 +91,9 @@ export class BacktraceClient extends EventEmitter {
   }
 
   public sendReport(report: BacktraceReport, callback?: (err?: Error) => void): BacktraceResult {
+    if (this.options.filter && this.options.filter(report)) {
+      return BacktraceResult.OnFilterHit(report);
+    }
     this.emit('before-send', report);
     const limitResult = this.testClientLimits(report);
     if (limitResult) {
@@ -114,6 +117,9 @@ export class BacktraceClient extends EventEmitter {
   }
 
   public async sendAsync(report: BacktraceReport): Promise<BacktraceResult> {
+    if (this.options.filter && this.options.filter(report)) {
+      return BacktraceResult.OnFilterHit(report);
+    }
     this.emit('before-send', report);
     const limitResult = this.testClientLimits(report);
     if (limitResult) {
@@ -145,6 +151,7 @@ export class BacktraceClient extends EventEmitter {
     if (url.includes('submit.backtrace.io')) {
       return url;
     }
+
     if (!this.options.token) {
       throw new Error('Token is required if Backtrace-node have to build url to Backtrace');
     }
@@ -158,7 +165,7 @@ export class BacktraceClient extends EventEmitter {
     }
     return {
       ...attributes,
-      ...this.options.attributes,
+      ...this.options.userAttributes,
       ...this.getMemorizedAttributes(),
     };
   }
