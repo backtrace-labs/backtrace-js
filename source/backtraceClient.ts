@@ -175,7 +175,7 @@ export class BacktraceClient extends EventEmitter {
     });
 
     if (!this.options.disableGlobalHandler) {
-      this.registerGlobalHandler(!!this.options.allowMultipleUncaughtExceptionListeners);
+      this.registerGlobalHandler();
     }
     if (this.options.handlePromises) {
       this.registerPromiseHandler();
@@ -183,36 +183,22 @@ export class BacktraceClient extends EventEmitter {
   }
 
   private registerPromiseHandler(): void {
-    // workaround for existing issue in TypeScript
-    (process as NodeJS.EventEmitter).on('unhandledRejection', (err: Error) => {
-      this.emit('unhandledRejection', err);
+    window.addEventListener('unhandledrejection', (event) => {
+      this.emit('unhandledRejection', event, false);
+      const err = new Error(event.reason);
       this.reportAsync(err, undefined);
     });
   }
 
-  private registerGlobalHandler(multipleExceptionListener: boolean): void {
-    const listenerCount: number = process.listenerCount('uncaughtException');
-    if (!multipleExceptionListener && listenerCount !== 0) {
-      console.error('Backtrace: multiple "uncaughtException" listeners attached.');
-      return;
-    }
-
-    process.on('uncaughtException', (e: Error) => {
-      this.emit('uncaughtException', e);
-      this.reportSync(e);
-      throw e;
+  private registerGlobalHandler(): void {
+    window.addEventListener('error', (event) => {
+      this.emit('error', event);
+      if (event.error) {
+        this.reportSync(event.error);
+      } else {
+        const err = new Error(event.error);
+        this.reportSync(err);
+      }
     });
-
-    if (!multipleExceptionListener) {
-      (process as NodeJS.EventEmitter).on('newListener', (eventName: string, listener) => {
-        if (eventName === 'uncaughtException') {
-          // handle worst scenario when someone want to add new uncaughtException listener
-          // tslint:disable-next-line: quotemark
-          const err = new Error("Backtrace: multiple 'uncaughtException' listeners attached.");
-          console.error(err.stack);
-          process.exit(1);
-        }
-      });
-    }
   }
 }

@@ -1,5 +1,5 @@
 // tslint:disable-next-line: no-var-requires
-const packageJson = require('@src/../../package.json');
+const packageJson = require('./../../package.json');
 
 import { IBacktraceData } from '@src/model/backtraceData';
 import { BacktraceStackTrace } from '@src/model/backtraceStackTrace';
@@ -57,13 +57,6 @@ export class BacktraceReport {
    * Backtrace complex objet
    */
   private annotations: { [index: string]: any } = {};
-
-  /**
-   * Calling module information
-   */
-  private _callingModule!: NodeRequire;
-
-  private _callingModulePath!: string;
 
   private tabWidth: number = 8;
   private contextLineCount: number = 200;
@@ -238,20 +231,30 @@ export class BacktraceReport {
   }
 
   private readAttributes(): object {
-    const { name, version, main, description, author } = (this._callingModule || {}) as any;
-    const result = {
+    return {
       'process.age': Math.floor((new Date().getTime() - pageStartTime.getTime()) / 1000),
       hostname: window.location && window.location.hostname,
       referer: window.location && window.location.href,
       'user.agent': navigator.userAgent,
-      application: name,
-      version,
-      main,
-      description,
-      author,
-    } as any;
-
-    return result;
+      'location.port': document.location.port,
+      'location.protocol': document.location.protocol,
+      'location.origin': window.location.origin,
+      'location.href': window.location.href || document.URL,
+      language: navigator.language,
+      'browser.appversion': navigator.appVersion,
+      'browser.platform': navigator.platform,
+      'browser.vendor': navigator.vendor,
+      'browser.version': navigator.appVersion,
+      'browser.userAgent': navigator.userAgent,
+      'window.outerHeight': window.outerHeight,
+      'window.outerWidth': window.outerWidth,
+      'window.pageXOffset': window.pageXOffset,
+      'window.pageYOffset': window.pageYOffset,
+      'window.screenX': window.screenX,
+      'window.screenY': window.screenY,
+      'window.screenLeft': window.screenLeft,
+      'window.screenTop': window.screenTop,
+    };
   }
 
   private readAnnotation(): object {
@@ -260,7 +263,7 @@ export class BacktraceReport {
     if (this.detectReportType(this.err)) {
       result['Exception'] = this.err;
     }
-    return { ...result, ...this.annotations };
+    return { ...result, ...this.annotations, ...navigator.geolocation, ...window.screen };
   }
 
   private splitAttributesFromAnnotations(clientAttributes: { [index: string]: any }) {
