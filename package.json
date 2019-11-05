@@ -1,6 +1,6 @@
 {
   "name": "backtrace-js",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-alpha.0",
   "description": "Backtrace.io error reporting tool for client-side applications",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",

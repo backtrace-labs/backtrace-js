@@ -102,16 +102,16 @@ export class BacktraceReport {
    * @deprecated
    * Please don't use log method in new BacktraceReport object.
    */
-  public log() {
-    console.warn('log method is deprecated.');
+  public log(log: string) {
+    console.log(`BacktraceReport.log is deprecated. ${log}`);
   }
 
   /**
    * @deprecated
    * Please don't use trace method in new BacktraceReport object
    */
-  public trace() {
-    console.warn('trace method is deprecated.');
+  public trace(log: string) {
+    console.log(`BacktraceReport.log is deprecated. ${log}`);
   }
 
   /**
@@ -140,7 +140,7 @@ export class BacktraceReport {
     // not in constructor, but in additional method.
     await this.collectReportInformation();
 
-    return {
+    const data = {
       uuid: this.uuid,
       timestamp: this.timestamp,
       lang: this.lang,
@@ -152,7 +152,12 @@ export class BacktraceReport {
       agentVersion: this.agentVersion,
       annotations: this.annotations,
       attributes: this.attributes,
-    };
+    } as IBacktraceData;
+    if (this.attributes['symbolication_id']) {
+      data.symbolication = 'sourcemap';
+    }
+
+    return data;
   }
 
   public setSourceCodeOptions(tabWidth: number, contextLineCount: number) {

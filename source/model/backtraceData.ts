@@ -2,6 +2,7 @@ import { ISourceCode } from '@src/model/sourceCode';
 
 export interface IBacktraceData {
   uuid: string;
+  symbolication?: 'sourcemap';
   timestamp: number;
   lang: string;
   langVersion: string;
