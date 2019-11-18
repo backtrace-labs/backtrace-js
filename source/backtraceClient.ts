@@ -10,7 +10,6 @@ import { EventEmitter } from 'events';
  */
 export class BacktraceClient extends EventEmitter {
   public options: BacktraceClientOptions;
-  private _memorizedAttributes: object = {};
   private _backtraceApi: BacktraceApi;
   private _clientRateLimit: ClientRateLimit;
 
@@ -36,21 +35,7 @@ export class BacktraceClient extends EventEmitter {
    * @param value attribute value
    */
   public memorize(key: string, value: any): void {
-    (this._memorizedAttributes as any)[key] = value;
-  }
-
-  /**
-   * Clear all saved attributes
-   */
-  public clearMemorizedAttributes(): void {
-    this._memorizedAttributes = {};
-  }
-
-  /**
-   * Returns all memorized attributes without clearing them.
-   */
-  public checkMemorizedAttributes(): object {
-    return this._memorizedAttributes;
+    (this.options.userAttributes as any)[key] = value;
   }
 
   public createReport(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceReport {
@@ -166,14 +151,7 @@ export class BacktraceClient extends EventEmitter {
     return {
       ...attributes,
       ...this.options.userAttributes,
-      ...this.getMemorizedAttributes(),
     };
-  }
-
-  private getMemorizedAttributes() {
-    const result = this._memorizedAttributes;
-    this._memorizedAttributes = {};
-    return result;
   }
 
   private registerHandlers(): void {
