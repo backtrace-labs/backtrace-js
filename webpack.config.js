@@ -10,7 +10,6 @@ const config = {
   output: {
     path: path.resolve(__dirname, 'lib'),
     filename: 'index.js',
-    libraryTarget: 'commonjs2',
   },
   devtool: 'source-map',
   node: {
