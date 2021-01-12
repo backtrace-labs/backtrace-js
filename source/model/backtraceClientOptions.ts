@@ -1,6 +1,6 @@
 import { BacktraceReport } from './backtraceReport';
 
-export class BacktraceClientOptions implements IBacktraceClientOptions {
+export class BacktraceClientOptions {
   public timeout: number = 15000;
   public endpoint!: string;
   public token?: string;

@@ -19,8 +19,6 @@ bt.report(new Error('something broke'));
 
 ## Documentation
 
-See [backtrace-node](https://github.com/backtrace-labs/backtrace-node#documentation)'s documentation.
-
 ### bt.initialize([options])
 
 This is intended to be one of the first things your application does during

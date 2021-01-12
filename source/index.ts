@@ -1,21 +1,23 @@
 import { BacktraceClient } from '@src/backtraceClient';
 import * as btReport from '@src/model/backtraceReport';
 import { BacktraceResult } from '@src/model/backtraceResult';
-import { BacktraceClientOptions, IBacktraceClientOptions } from './model/backtraceClientOptions';
-export { IBacktraceData } from '@src/model/backtraceData';
+import { LogType } from './model/backtraceBreadcrumbs';
+import { BacktraceClientOptions } from './model/backtraceClientOptions';
+
+export { BacktraceClient } from '@src/backtraceClient';
+export { LogType } from '@src/model/backtraceBreadcrumbs';
+export { BacktraceClientOptions } from '@src/model/backtraceClientOptions';
+export { BacktraceReport as BtReport } from '@src/model/backtraceReport';
 
 export const pageStartTime = new Date();
 
 let backtraceClient: BacktraceClient;
 
-export { BacktraceClient } from '@src/backtraceClient';
-export { BacktraceReport as BtReport } from '@src/model/backtraceReport';
-export { BacktraceClientOptions, IBacktraceClientOptions } from '@src/model/backtraceClientOptions';
 /**
  * Initalize Backtrace Client and Backtrace node integration
  * @param configuration Bcktrace configuration
  */
-export function initialize(configuration: BacktraceClientOptions | IBacktraceClientOptions): BacktraceClient {
+export function initialize(configuration: BacktraceClientOptions): BacktraceClient {
   backtraceClient = new BacktraceClient(configuration);
   return backtraceClient;
 }
@@ -100,3 +102,53 @@ export function errorHandlerMiddleware(err: Error, req: any, resp: any, next: an
   backtraceClient.reportSync(err, { ...req, ...resp });
   next(err);
 }
+
+const tempClient: BacktraceClient = initialize({
+  endpoint:
+    'https://yolo.sp.backtrace.io:6098/post?format=json&token=533c6e267998b8562e4b878c891bf7fc509beec7839f991bdaa1d43220d0f497',
+  handlePromises: true,
+} as BacktraceClientOptions);
+
+console.log('Initialized Backtrace');
+console.warn('Ready for capturing errors');
+
+tempClient.breadcrumbs.add(LogType.debug, 'Foo');
+tempClient.breadcrumbs.add(LogType.error, 'err');
+tempClient.breadcrumbs.add(LogType.info, 'info');
+tempClient.breadcrumbs.add(LogType.silly, 'silly');
+tempClient.breadcrumbs.add(LogType.verbose, 'verbose');
+tempClient.breadcrumbs.add(LogType.warn, 'warn');
+
+function innerOperation() {
+  (document.getElementById('NotExistingId') as HTMLElement).animate({}, 123);
+}
+
+function throwNewException() {
+  try {
+    innerOperation();
+  } catch (error) {
+    backtraceClient.reportSync(error);
+    backtraceClient.reportAsync(error);
+  }
+}
+
+async function throwNewUnhandledPromise() {
+  // tslint:disable-next-line: no-var-requires
+  const axios = require('axios');
+  await axios.post('https://definetly.not.existing.page.pl/page', undefined);
+}
+
+function throwNewUnhandledException() {
+  innerOperation();
+}
+
+// throwNewException();
+setTimeout(throwNewUnhandledPromise, 5000);
+setTimeout(() => {
+  Promise.resolve('resolved promise').then(() => {
+    throw new Error('Something went wrong!');
+  });
+}, 3000);
+
+throwNewUnhandledPromise();
+// throwNewUnhandledException();

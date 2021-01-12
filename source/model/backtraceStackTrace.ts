@@ -1,11 +1,11 @@
-import { ISourceCode, ISourceLocation } from '@src/model/sourceCode';
+import { ISourceCode } from '@src/model/sourceCode';
 
 /**
  * Reprresent single stack frame in stack trace
  */
 interface IBacktraceStackFrame {
   funcName: string;
-  sourceCode: string;
+  sourceCode?: string;
   library: string;
   line: number;
   column: number;
@@ -22,10 +22,6 @@ export class BacktraceStackTrace {
 
   public sourceCodeInformation: { [index: string]: ISourceCode } = {};
   private readonly stackLineRe = /\s+at (.+) \((.+):(\d+):(\d+)\)/;
-  private requestedSourceCode: { [index: string]: ISourceLocation[] } = {};
-
-  private tabWidth: number = 8;
-  private contextLineCount: number = 200;
 
   private error: Error;
   constructor(err: Error | string) {
@@ -34,11 +30,6 @@ export class BacktraceStackTrace {
       err = new Error();
     }
     this.error = err;
-  }
-
-  public setSourceCodeOptions(tabWidth: number, contextLineCount: number) {
-    this.tabWidth = tabWidth;
-    this.contextLineCount = contextLineCount;
   }
 
   /**
@@ -62,7 +53,7 @@ export class BacktraceStackTrace {
   /**
    * Start parsing stack frames
    */
-  public async parseStackFrames(): Promise<void> {
+  public parseStackFrames(): void {
     const stackTrace = this.error.stack;
     if (!stackTrace) {
       return;
@@ -74,30 +65,22 @@ export class BacktraceStackTrace {
       if (!match || match.length < 4) {
         return;
       }
-      const backtraceLibStackFrame = match[2].indexOf('node_modules/backtrace-node') !== -1;
+      const backtraceLibStackFrame = match[2].indexOf('node_modules/backtrace-js') !== -1;
       if (backtraceLibStackFrame) {
         return;
       }
 
-      const stackFrame = {
+      const stackFrame: IBacktraceStackFrame = {
         funcName: match[1],
-        sourceCode: match[2],
         library: match[2],
         line: parseInt(match[3], 10),
         column: parseInt(match[4], 10),
       };
 
-      this.addSourceRequest(stackFrame);
+      if (this.stack.length === 0) {
+        stackFrame['sourceCode'] = 'main';
+      }
       this.stack.push(stackFrame);
-    });
-  }
-
-  private addSourceRequest(stackFrame: IBacktraceStackFrame): void {
-    // add source code to existing list. Otherwise create empty array
-    this.requestedSourceCode[stackFrame.sourceCode] = this.requestedSourceCode[stackFrame.sourceCode] || [];
-    this.requestedSourceCode[stackFrame.sourceCode].push({
-      line: stackFrame.line,
-      column: stackFrame.column,
     });
   }
 }

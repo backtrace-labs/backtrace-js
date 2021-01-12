@@ -1,20 +1,20 @@
 import { BacktraceApi } from '@src/backtraceApi';
 import { ClientRateLimit } from '@src/clientRateLimit';
 import { BacktraceClientOptions, IBacktraceClientOptions } from '@src/model/backtraceClientOptions';
-import { IBacktraceData } from '@src/model/backtraceData';
 import { BacktraceReport } from '@src/model/backtraceReport';
 import { BacktraceResult } from '@src/model/backtraceResult';
-import { EventEmitter } from 'events';
+import { BacktraceBreadcrumbs } from './model/backtraceBreadcrumbs';
 /**
  * Backtrace client
  */
-export class BacktraceClient extends EventEmitter {
+export class BacktraceClient {
   public options: BacktraceClientOptions;
+  public breadcrumbs: BacktraceBreadcrumbs = new BacktraceBreadcrumbs(10);
+
   private _backtraceApi: BacktraceApi;
   private _clientRateLimit: ClientRateLimit;
 
   constructor(clientOptions: IBacktraceClientOptions | BacktraceClientOptions) {
-    super();
     if (!clientOptions.endpoint) {
       throw new Error(`Backtrace: missing 'endpoint' option.`);
     }
@@ -39,10 +39,28 @@ export class BacktraceClient extends EventEmitter {
   }
 
   public createReport(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceReport {
-    this.emit('new-report', payload, reportAttributes);
+    // this.emit('new-report', payload, reportAttributes);
     const attributes = this.combineClientAttributes(reportAttributes);
     const report = new BacktraceReport(payload, attributes);
+    report.send = (callback) => {
+      this.sendAsync(report)
+        .then(() => {
+          if (callback) {
+            callback(undefined);
+          }
+        })
+        .catch((e) => {
+          if (callback) {
+            callback(e);
+          }
+        });
+    };
+    report.sendSync = (callback) => {
+      this.sendReport(report, callback);
+    };
+
     report.setSourceCodeOptions(this.options.tabWidth, this.options.contextLineCount);
+
     return report;
   }
   /**
@@ -55,14 +73,15 @@ export class BacktraceClient extends EventEmitter {
     reportAttributes: object | undefined = {},
   ): Promise<BacktraceResult> {
     const report = this.createReport(payload, reportAttributes);
-    this.emit('before-send', report);
-    const limitResult = this.testClientLimits(report);
-    if (limitResult) {
-      return limitResult;
-    }
-    const result = await this._backtraceApi.send(report);
-    this.emit('after-send', report, result);
-    return result;
+    return new Promise<BacktraceResult>((res, rej) => {
+      this.sendReport(report, (err?: Error, response?: BacktraceResult) => {
+        if (err || !response) {
+          rej(err);
+          return;
+        }
+        res(response);
+      });
+    });
   }
 
   /**
@@ -75,22 +94,25 @@ export class BacktraceClient extends EventEmitter {
     return this.sendReport(report);
   }
 
-  public sendReport(report: BacktraceReport, callback?: (err?: Error) => void): BacktraceResult {
+  public sendReport(report: BacktraceReport, callback?: (err?: Error, res?: BacktraceResult) => void): BacktraceResult {
+    if (!report.uuid) {
+      throw new Error('Invalid backtrace report object. Please pass an instance of the Backtrace report object.');
+    }
     if (this.options.filter && this.options.filter(report)) {
       return BacktraceResult.OnFilterHit(report);
     }
-    this.emit('before-send', report);
     const limitResult = this.testClientLimits(report);
     if (limitResult) {
       return limitResult;
     }
+
+    report.sourceCode = this.breadcrumbs.toSourceCode();
     this._backtraceApi
       .send(report)
       .then((result) => {
         if (callback) {
-          callback(result.Error);
+          callback(result.Error, result);
         }
-        this.emit('after-send', report, result);
       })
       .catch((err) => {
         if (callback) {
@@ -105,7 +127,6 @@ export class BacktraceClient extends EventEmitter {
     if (this.options.filter && this.options.filter(report)) {
       return BacktraceResult.OnFilterHit(report);
     }
-    this.emit('before-send', report);
     const limitResult = this.testClientLimits(report);
     if (limitResult) {
       return limitResult;
@@ -115,13 +136,11 @@ export class BacktraceClient extends EventEmitter {
 
   private testClientLimits(report: BacktraceReport): BacktraceResult | undefined {
     if (this.samplingHit()) {
-      this.emit('sampling-hit', report);
       return BacktraceResult.OnSamplingHit(report);
     }
 
     const limitReach = this._clientRateLimit.skipReport(report);
     if (limitReach) {
-      this.emit('rate-limit', report);
       return BacktraceResult.OnLimitReached(report);
     }
     return undefined;
@@ -133,12 +152,12 @@ export class BacktraceClient extends EventEmitter {
 
   private getSubmitUrl(): string {
     const url = this.options.endpoint;
-    if (url.includes('submit.backtrace.io')) {
+    if (url.includes('submit.backtrace.io') || url.includes('token=')) {
       return url;
     }
 
     if (!this.options.token) {
-      throw new Error('Token is required if Backtrace-node have to build url to Backtrace');
+      throw new Error('Token is required if Backtrace-js have to build url to Backtrace');
     }
     const uriSeparator = url.endsWith('/') ? '' : '/';
     return `${this.options.endpoint}${uriSeparator}post?format=json&token=${this.options.token}`;
@@ -155,10 +174,6 @@ export class BacktraceClient extends EventEmitter {
   }
 
   private registerHandlers(): void {
-    this._backtraceApi.on('before-data-send', (report: BacktraceReport, json: IBacktraceData) => {
-      this.emit('before-data-send', report, json);
-    });
-
     if (!this.options.disableGlobalHandler) {
       this.registerGlobalHandler();
     }
@@ -168,22 +183,29 @@ export class BacktraceClient extends EventEmitter {
   }
 
   private registerPromiseHandler(): void {
-    window.addEventListener('unhandledrejection', (event) => {
-      this.emit('unhandledRejection', event, false);
+    window.onunhandledrejection = (event: PromiseRejectionEvent) => {
       const err = new Error(event.reason);
-      this.reportAsync(err, undefined);
-    });
+      const report = this.createReport(err);
+      report.addAnnotation('onunhandledrejection', event);
+
+      this.sendReport(report);
+    };
   }
 
   private registerGlobalHandler(): void {
-    window.addEventListener('error', (event) => {
-      this.emit('error', event);
-      if (event.error) {
-        this.reportSync(event.error);
-      } else {
-        const err = new Error(event.error);
-        this.reportSync(err);
+    window.onerror = (msg: string | Event, url, lineNumber, columnNumber, error) => {
+      if (!error) {
+        if (typeof msg === 'string') {
+          error = new Error(msg);
+        } else {
+          error = new Error((msg as ErrorEvent).error);
+        }
       }
-    });
+
+      this.reportSync(error, {
+        'exception.lineNumber': lineNumber,
+        'exception.columnNumber': columnNumber,
+      });
+    };
   }
 }

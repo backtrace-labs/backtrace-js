@@ -3,6 +3,7 @@ const packageJson = require('./../../package.json');
 
 import { IBacktraceData } from '@src/model/backtraceData';
 import { BacktraceStackTrace } from '@src/model/backtraceStackTrace';
+import { getBrowserName, getBrowserVersion, getOs, isMobile } from '@src/utils/agentUtils';
 import { pageStartTime } from '..';
 
 const crypto = window.crypto;
@@ -20,10 +21,12 @@ export class BacktraceReport {
   public readonly langVersion = navigator.userAgent;
   // Backtrace-ndoe name
   public readonly agent = packageJson.name;
-  // Backtrace-node  version
+  // Backtrace-js  version
   public readonly agentVersion = packageJson.version;
   // main thread name
   public readonly mainThread = 'main';
+
+  public sourceCode = {};
 
   public classifiers: string[] = [];
 
@@ -98,20 +101,12 @@ export class BacktraceReport {
     this.classifiers = this.detectReportType(err) ? [err.name] : [];
   }
 
-  /**
-   * @deprecated
-   * Please don't use log method in new BacktraceReport object.
-   */
   public log(log: string) {
-    console.log(`BacktraceReport.log is deprecated. ${log}`);
+    console.log(log);
   }
 
-  /**
-   * @deprecated
-   * Please don't use trace method in new BacktraceReport object
-   */
   public trace(log: string) {
-    console.log(`BacktraceReport.log is deprecated. ${log}`);
+    console.trace(log);
   }
 
   /**
@@ -152,7 +147,9 @@ export class BacktraceReport {
       agentVersion: this.agentVersion,
       annotations: this.annotations,
       attributes: this.attributes,
+      sourceCode: { main: this.sourceCode },
     } as IBacktraceData;
+
     if (this.attributes['symbolication_id']) {
       data.symbolication = 'sourcemap';
     }
@@ -168,9 +165,7 @@ export class BacktraceReport {
   private async collectReportInformation(): Promise<void> {
     // get stack trace to retrieve calling module information
     this.stackTrace = new BacktraceStackTrace(this.err);
-    this.stackTrace.setSourceCodeOptions(this.tabWidth, this.contextLineCount);
-    await this.stackTrace.parseStackFrames();
-
+    this.stackTrace.parseStackFrames();
     // combine attributes
     this.attributes = {
       ...this.readBuiltInAttributes(),
@@ -235,21 +230,31 @@ export class BacktraceReport {
   }
 
   private readAttributes(): object {
+    const browserName = getBrowserName();
     return {
       'process.age': Math.floor((new Date().getTime() - pageStartTime.getTime()) / 1000),
       hostname: window.location && window.location.hostname,
       referer: window.location && window.location.href,
-      'user.agent': navigator.userAgent,
+      'user.agent.full': navigator.userAgent,
       'location.port': document.location.port,
       'location.protocol': document.location.protocol,
       'location.origin': window.location.origin,
       'location.href': window.location.href || document.URL,
       language: navigator.language,
-      'browser.appversion': navigator.appVersion,
+      'browser.name': browserName,
+      'browser.version': getBrowserVersion(browserName),
       'browser.platform': navigator.platform,
       'browser.vendor': navigator.vendor,
-      'browser.version': navigator.appVersion,
-      'browser.userAgent': navigator.userAgent,
+      'cookies.enable': navigator.cookieEnabled,
+      'document.domain': document.domain,
+      'document.baseURI': document.baseURI,
+      'document.title': document.title,
+      'document.referrer': document.referrer,
+      mobile: isMobile(),
+      'localstorage.enable': !!window.localStorage,
+      'uname.sysname': getOs(),
+      'window.innerHeight': window.innerHeight,
+      'window.innerWidth': window.innerWidth,
       'window.outerHeight': window.outerHeight,
       'window.outerWidth': window.outerWidth,
       'window.pageXOffset': window.pageXOffset,
@@ -262,7 +267,30 @@ export class BacktraceReport {
   }
 
   private readAnnotation(): object {
-    return { Geolocation: navigator.geolocation, Screen: window.screen, Exception: this.err, ...this.annotations };
+    return {
+      Memory: window.performance ? window.performance : performance.timing,
+      Geolocation: navigator.geolocation,
+      Screen: {
+        'screen.availHeight': window.screen.availHeight,
+        'screen.availWidth': window.screen.availWidth,
+        'screen.height': window.screen.height,
+        'screen.width': window.screen.width,
+        'screen.orientation': window.screen.orientation.type,
+        'screen.colorDepth': window.screen.colorDepth,
+        'screen.pixelDepth': window.screen.pixelDepth,
+      },
+      Exception: this.getSerializableError(),
+      ...this.annotations,
+    };
+  }
+
+  private getSerializableError() {
+    const serializableError: { [index: string]: string } = {};
+    const self = this;
+    Object.getOwnPropertyNames(this.err).forEach((key) => {
+      serializableError[key] = (self.err as { [index: string]: any })[key];
+    });
+    return serializableError;
   }
 
   private splitAttributesFromAnnotations(clientAttributes: { [index: string]: any }) {
