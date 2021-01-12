@@ -1,5 +1,3 @@
-import { ISourceCode } from '@src/model/sourceCode';
-
 /**
  * Reprresent single stack frame in stack trace
  */
@@ -20,7 +18,6 @@ export class BacktraceStackTrace {
   public readonly name = 'main';
   public stack: IBacktraceStackFrame[] = [];
 
-  public sourceCodeInformation: { [index: string]: ISourceCode } = {};
   private readonly stackLineRe = /\s+at (.+) \((.+):(\d+):(\d+)\)/;
 
   private error: Error;
@@ -41,13 +38,6 @@ export class BacktraceStackTrace {
       fault: this.fault,
       stack: this.stack,
     };
-  }
-
-  /**
-   * Get source code information
-   */
-  public getSourceCode(): { [index: string]: ISourceCode } {
-    return this.sourceCodeInformation;
   }
 
   /**

@@ -1,5 +1,3 @@
-// import FormData from 'form-data';
-// import { IBacktraceData } from '@src/model/backtraceData';
 import { BacktraceReport } from '@src/model/backtraceReport';
 import { BacktraceResult } from '@src/model/backtraceResult';
 import axios from 'axios';
@@ -17,6 +15,12 @@ export class BacktraceApi {
           'Content-Type': `application/json`,
         },
       });
+
+      if (result.status === 429) {
+        const err = new Error(`Backtrace- reached report limit.`);
+        return BacktraceResult.OnError(report, err);
+      }
+
       if (result.status !== 200) {
         const err = new Error(`Invalid attempt to submit error to Backtrace. Result: ${result}`);
         return BacktraceResult.OnError(report, err);

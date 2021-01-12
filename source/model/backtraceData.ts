@@ -1,5 +1,3 @@
-import { ISourceCode } from '@src/model/sourceCode';
-
 export interface IBacktraceData {
   uuid: string;
   symbolication?: 'sourcemap';
