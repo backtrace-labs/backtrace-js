@@ -1,10 +1,10 @@
 // tslint:disable-next-line: no-var-requires
 const packageJson = require('./../../package.json');
 
-import { IBacktraceData } from '@src/model/backtraceData';
-import { BacktraceStackTrace } from '@src/model/backtraceStackTrace';
-import { getBrowserName, getBrowserVersion, getOs, isMobile } from '@src/utils/agentUtils';
-import { pageStartTime } from '..';
+import { pageStartTime } from '../index';
+import { IBacktraceData } from '../model/backtraceData';
+import { BacktraceStackTrace } from '../model/backtraceStackTrace';
+import { getBrowserName, getBrowserVersion, getOs, isMobile } from '../utils/agentUtils';
 
 const crypto = window.crypto;
 /**
@@ -26,7 +26,7 @@ export class BacktraceReport {
   // main thread name
   public readonly mainThread = 'main';
 
-  public sourceCode = {};
+  public sourceCode: { text: string } | undefined;
 
   public classifiers: string[] = [];
 
@@ -147,8 +147,11 @@ export class BacktraceReport {
       agentVersion: this.agentVersion,
       annotations: this.annotations,
       attributes: this.attributes,
-      sourceCode: { main: this.sourceCode },
     } as IBacktraceData;
+
+    if (this.sourceCode && this.sourceCode.text) {
+      data.sourceCode = { main: this.sourceCode };
+    }
 
     if (this.attributes['symbolication_id']) {
       data.symbolication = 'sourcemap';

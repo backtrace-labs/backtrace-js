@@ -2,7 +2,7 @@ const path = require('path');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 const config = {
-  mode: 'development',
+  mode: 'production',
   entry: {
     app: path.resolve(__dirname, 'source/index.ts'),
   },
@@ -10,19 +10,15 @@ const config = {
   output: {
     path: path.resolve(__dirname, 'lib'),
     filename: 'index.js',
+    library: 'backtraceJs',
+    libraryTarget: 'umd',
   },
   devtool: 'source-map',
-  node: {
-    __dirname: false,
-  },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
         loader: 'ts-loader',
-        options: {
-          transpileOnly: true,
-        },
       },
     ],
   },
@@ -40,10 +36,5 @@ const config = {
     }),
   ],
 };
-
-if (process.env.NODE_ENV === 'production') {
-  config.mode = 'production';
-  delete config.devtool;
-}
 
 module.exports = config;

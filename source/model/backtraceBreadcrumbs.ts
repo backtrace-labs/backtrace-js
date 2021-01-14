@@ -29,7 +29,7 @@ export class BacktraceBreadcrumbs {
     this._breadcrumbs.push(formattedMessage);
   }
 
-  public toSourceCode(): object {
+  public toSourceCode(): { text: string; id: string; type: string; title: string; highlightLine: boolean } {
     return {
       id: 'main',
       type: 'Text',

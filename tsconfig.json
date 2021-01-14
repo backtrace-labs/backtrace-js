@@ -3,8 +3,8 @@
     "stripInternal": true,
     "target": "es2017",
     "lib": ["dom", "es2015", "es2016", "es2017", "esnext"],
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "commonjs",
+    "moduleResolution": "Node",
     "sourceMap": true,
     "outDir": "./lib",
     "strict": true,
@@ -13,7 +13,7 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "@src/*": ["source/*"]
+      "@src/*": ["./source/*"]
     }
   },
   "exclude": ["lib", "./test", "./examples"]

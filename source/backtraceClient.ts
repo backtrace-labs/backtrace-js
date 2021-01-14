@@ -1,9 +1,9 @@
-import { BacktraceApi } from '@src/backtraceApi';
-import { ClientRateLimit } from '@src/clientRateLimit';
-import { BacktraceClientOptions, IBacktraceClientOptions } from '@src/model/backtraceClientOptions';
-import { BacktraceReport } from '@src/model/backtraceReport';
-import { BacktraceResult } from '@src/model/backtraceResult';
+import { BacktraceApi } from './backtraceApi';
+import { ClientRateLimit } from './clientRateLimit';
 import { BacktraceBreadcrumbs } from './model/backtraceBreadcrumbs';
+import { BacktraceClientOptions } from './model/backtraceClientOptions';
+import { BacktraceReport } from './model/backtraceReport';
+import { BacktraceResult } from './model/backtraceResult';
 /**
  * Backtrace client
  */
@@ -14,7 +14,7 @@ export class BacktraceClient {
   private _backtraceApi: BacktraceApi;
   private _clientRateLimit: ClientRateLimit;
 
-  constructor(clientOptions: IBacktraceClientOptions | BacktraceClientOptions) {
+  constructor(clientOptions: BacktraceClientOptions) {
     if (!clientOptions.endpoint) {
       throw new Error(`Backtrace: missing 'endpoint' option.`);
     }
@@ -22,7 +22,7 @@ export class BacktraceClient {
       ...new BacktraceClientOptions(),
       ...clientOptions,
     } as BacktraceClientOptions;
-    this._backtraceApi = new BacktraceApi(this.getSubmitUrl(), this.options.timeout);
+    this._backtraceApi = new BacktraceApi(this.getSubmitUrl(), this.options.timeout, this.options.ignoreSslCert);
     this._clientRateLimit = new ClientRateLimit(this.options.rateLimit);
     this.registerHandlers();
   }

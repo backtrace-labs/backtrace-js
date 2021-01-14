@@ -1,12 +1,12 @@
-import { BacktraceClient } from '@src/backtraceClient';
-import * as btReport from '@src/model/backtraceReport';
-import { BacktraceResult } from '@src/model/backtraceResult';
+import { BacktraceClient } from './backtraceClient';
 import { BacktraceClientOptions } from './model/backtraceClientOptions';
+import * as btReport from './model/backtraceReport';
+import { BacktraceResult } from './model/backtraceResult';
 
-export { BacktraceClient } from '@src/backtraceClient';
-export { LogType } from '@src/model/backtraceBreadcrumbs';
-export { BacktraceClientOptions } from '@src/model/backtraceClientOptions';
-export { BacktraceReport as BtReport } from '@src/model/backtraceReport';
+export { BacktraceClient } from './backtraceClient';
+export { LogType } from './model/backtraceBreadcrumbs';
+export { BacktraceClientOptions } from './model/backtraceClientOptions';
+export { BacktraceReport as BtReport } from './model/backtraceReport';
 
 export const pageStartTime = new Date();
 
