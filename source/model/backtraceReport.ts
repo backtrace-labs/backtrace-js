@@ -156,6 +156,8 @@ export class BacktraceReport {
     if (this.attributes['symbolication_id']) {
       data.symbolication = 'sourcemap';
     }
+    
+    data.attributes['guid'] = this.getGuid();
 
     return data;
   }
@@ -187,6 +189,15 @@ export class BacktraceReport {
 
   private detectReportType(err: Error | string): err is Error {
     return err instanceof Error;
+  }
+  
+  private getGuid(): string {
+    let guid = window.localStorage.getItem('backtrace-guid')
+    if (!guid) {
+      guid = this.generateUuid();
+      window.localStorage.setItem('backtrace-guid', guid);
+    }
+    return guid;
   }
 
   private generateUuid(): string {
