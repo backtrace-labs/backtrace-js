@@ -1,15 +1,15 @@
 import { BacktraceApi } from './backtraceApi';
 import { ClientRateLimit } from './clientRateLimit';
-import { BacktraceBreadcrumbs } from './model/backtraceBreadcrumbs';
 import { BacktraceClientOptions } from './model/backtraceClientOptions';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
+import { Breadcrumbs } from './model/breadcrumbs';
 /**
  * Backtrace client
  */
 export class BacktraceClient {
   public options: BacktraceClientOptions;
-  public breadcrumbs: BacktraceBreadcrumbs = new BacktraceBreadcrumbs(10);
+  public breadcrumbs: Breadcrumbs;
 
   private _backtraceApi: BacktraceApi;
   private _clientRateLimit: ClientRateLimit;
@@ -22,6 +22,7 @@ export class BacktraceClient {
       ...new BacktraceClientOptions(),
       ...clientOptions,
     } as BacktraceClientOptions;
+    this.breadcrumbs = new Breadcrumbs(this.options.breadcrumbLimit);
     this._backtraceApi = new BacktraceApi(this.getSubmitUrl(), this.options.timeout, this.options.ignoreSslCert);
     this._clientRateLimit = new ClientRateLimit(this.options.rateLimit);
     this.registerHandlers();
@@ -37,11 +38,16 @@ export class BacktraceClient {
   public memorize(key: string, value: any): void {
     (this.options.userAttributes as any)[key] = value;
   }
-
+ 
   public createReport(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceReport {
     // this.emit('new-report', payload, reportAttributes);
     const attributes = this.combineClientAttributes(reportAttributes);
     const report = new BacktraceReport(payload, attributes);
+    
+    if (this.breadcrumbs.isEnabled()) {
+      report.addAnnotation(Breadcrumbs.annotationName, this.breadcrumbs.get());
+    }
+    
     report.send = (callback) => {
       this.sendAsync(report)
         .then(() => {
@@ -105,8 +111,6 @@ export class BacktraceClient {
     if (limitResult) {
       return limitResult;
     }
-
-    report.sourceCode = this.breadcrumbs.toSourceCode();
     this._backtraceApi
       .send(report)
       .then((result) => {

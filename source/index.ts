@@ -14,7 +14,7 @@ let backtraceClient: BacktraceClient;
 
 /**
  * Initalize Backtrace Client and Backtrace node integration
- * @param configuration Bcktrace configuration
+ * @param configuration Backtrace configuration
  */
 export function initialize(configuration: BacktraceClientOptions): BacktraceClient {
   backtraceClient = new BacktraceClient(configuration);
@@ -70,14 +70,14 @@ export function reportSync(data: Error | string, attributes: object | undefined 
 }
 
 /**
- * Generaten BacktraceReport with default configuration
+ * Generate BacktraceReport with default configuration
  */
 export function createReport(): btReport.BacktraceReport {
   return BacktraceReport();
 }
 
 /**
- * Generaten BacktraceReport with default configuration
+ * Generate BacktraceReport with default configuration
  */
 export function BacktraceReport(): btReport.BacktraceReport {
   if (!backtraceClient) {
@@ -101,3 +101,27 @@ export function errorHandlerMiddleware(err: Error, req: any, resp: any, next: an
   backtraceClient.reportSync(err, { ...req, ...resp });
   next(err);
 }
+
+  /**
+   * Record an event in the breadcrumbs buffer
+   * @param timestamp time of event
+   * @param type type of event
+   * @param message description of event
+   * @param attributes object of values related to event
+   */
+  export function dropBreadcrumb(
+    timestamp?: number,
+    type?: string,
+    message?: string,
+    attributes?: object,
+  ) {
+    if (!backtraceClient) {
+      throw new Error('Must call initialize method first');
+    }
+    backtraceClient.breadcrumbs.add(
+      timestamp,
+      type,
+      message,
+      attributes,
+    );
+  }
