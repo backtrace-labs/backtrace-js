@@ -1,27 +1,20 @@
-const defaultType = 'default';
-const acceptedTypes: string[] = [
-        'default',
-        'error', 
-        'warn', 
-        'info', 
-        'verbose', 
-        'debug', 
-        'silly'
-]; 
+const typeManual = 'manual';
+const defaultLevel = 'info';
 
 export interface IBreadcrumb {
-        timestamp: number | null,
+        timestamp: number,
+        level: string,
         type: string,
         message: string,
         attributes: object,
 }
 
 export class Breadcrumbs {
-        public static readonly annotationName = 'Breadcrumbs';
+        public static readonly attachmentName = 'backtrace-breadcrumbs';
         private breadcrumbLimit: number = -1;
         private _breadcrumbs: IBreadcrumb[] = [];
         
-        constructor(breadcrumbLimit: number | undefined) {
+        constructor(breadcrumbLimit?: number) {
                 if (!breadcrumbLimit || breadcrumbLimit <= 0) {
                         this.breadcrumbLimit = -1;
                         return;
@@ -30,11 +23,12 @@ export class Breadcrumbs {
         }
 
         public add(
-                timestamp?: number,
-                type?: string,
-                message='No message',
-                attributes={}
-        ) {
+                message: string,
+                attributes={},
+                timestamp=this.getNowUnixTimestamp(),
+                level: string=defaultLevel, 
+                type: string=typeManual,
+                ) {
                 // breadcrumbs are disabled
                 if (this.breadcrumbLimit < 0) {
                         return;
@@ -43,20 +37,10 @@ export class Breadcrumbs {
                 if (this._breadcrumbs.length === this.breadcrumbLimit) {
                         this._breadcrumbs.shift();
                 }
-
-                // validate inputs
-                if (!type) {
-                        type = defaultType;
-                }
-                if (!acceptedTypes.includes(type)) {
-                        throw new Error('Unknown breadcrumb type');      
-                }
-                if (!timestamp) {
-                        timestamp = Date.now();
-                }
                 
                 const breadcrumb = {
                         timestamp,
+                        level,
                         type,
                         message,
                         attributes,     
@@ -73,5 +57,9 @@ export class Breadcrumbs {
         
         public isEnabled() {
                 return this.breadcrumbLimit > 0;
+        }
+        
+        private getNowUnixTimestamp(): number {
+                return Math.floor(Date.now() / 1000);
         }
 }

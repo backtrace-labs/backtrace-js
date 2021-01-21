@@ -1,6 +1,6 @@
 {
   "name": "backtrace-js",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.breadcrumbs",
   "description": "Backtrace.io error reporting tool for client-side applications",
   "browser": "./lib/index.js",
   "main": "./lib/index.js",
@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
+    "form-data": "^3.0.0",
     "json-stringify-safe": "^5.0.1"
   },
   "devDependencies": {

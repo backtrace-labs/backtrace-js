@@ -1,17 +1,19 @@
 // tslint:disable-next-line: no-var-requires
 const packageJson = require('./../../package.json');
 
+import FormData from 'form-data';
 import { pageStartTime } from '../index';
 import { IBacktraceData } from '../model/backtraceData';
 import { BacktraceStackTrace } from '../model/backtraceStackTrace';
+import { Breadcrumbs } from '../model/breadcrumbs';
 import { getBrowserName, getBrowserVersion, getOs, isMobile } from '../utils/agentUtils';
-
+import { IBreadcrumb } from './breadcrumbs';
 const crypto = window.crypto;
 /**
  * BacktraceReport describe current exception/message payload message to Backtrace
  */
 export class BacktraceReport {
-  // reprot id
+  // report id
   public readonly uuid: string = this.generateUuid();
   // timestamp
   public readonly timestamp: number = Math.floor(new Date().getTime() / 1000);
@@ -74,8 +76,15 @@ export class BacktraceReport {
    *
    * @param err Error or message - content to report
    * @param attributes Report attributes dictionary
+   * @param breadcrumbs list of breadcrumbs to include as an attachment
+   * @param attachment an client-provided attachment
    */
-  constructor(private err: Error | string = '', private clientAttributes: { [index: string]: any } = {}) {
+  constructor(
+      private err: Error | string = '',
+      private clientAttributes: { [index: string]: any } = {}, 
+      private breadcrumbs?: IBreadcrumb[], 
+      private attachment?: string | object, 
+    ) {
     if (!clientAttributes) {
       clientAttributes = {};
     }
@@ -162,6 +171,25 @@ export class BacktraceReport {
     return data;
   }
 
+  public async toFormData(): Promise<FormData> {
+    const reportJson = await this.toJson();
+    const formData = new FormData();
+    const blob = new Blob([JSON.stringify(reportJson)]);
+    formData.append('upload_file', blob, 'upload_file.json');
+    
+    if (this.breadcrumbs) {
+      const breadcrumbBlob = new Blob([JSON.stringify(this.breadcrumbs)]);
+      formData.append(Breadcrumbs.attachmentName, breadcrumbBlob, Breadcrumbs.attachmentName);
+    }
+    
+    if (this.attachment) {
+      const attachmentBlob = new Blob([JSON.stringify(this.attachment)]);
+      const attachmentName = `attachment_${Date.now()}`;
+      formData.append(attachmentName, attachmentBlob, attachmentName);
+    }
+    return formData;
+  }
+  
   public setSourceCodeOptions(tabWidth: number, contextLineCount: number) {
     this.tabWidth = tabWidth;
     this.contextLineCount = contextLineCount;

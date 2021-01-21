@@ -38,15 +38,16 @@ export class BacktraceClient {
   public memorize(key: string, value: any): void {
     (this.options.userAttributes as any)[key] = value;
   }
- 
-  public createReport(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceReport {
+  
+  public createReport(
+      payload: Error | string,
+      reportAttributes: object | undefined = {}, 
+      attachment?: string | object,
+  ): BacktraceReport {
     // this.emit('new-report', payload, reportAttributes);
     const attributes = this.combineClientAttributes(reportAttributes);
-    const report = new BacktraceReport(payload, attributes);
-    
-    if (this.breadcrumbs.isEnabled()) {
-      report.addAnnotation(Breadcrumbs.annotationName, this.breadcrumbs.get());
-    }
+    const breadcrumbs = this.breadcrumbs.isEnabled() ? this.breadcrumbs.get() : undefined;
+    const report = new BacktraceReport(payload, attributes, breadcrumbs, attachment);
     
     report.send = (callback) => {
       this.sendAsync(report)
@@ -73,12 +74,14 @@ export class BacktraceClient {
    * Send report asynchronously to Backtrace
    * @param payload report payload
    * @param reportAttributes attributes
+   * @param attachment data to be converted to a Blob and sent as attachment with report
    */
   public async reportAsync(
     payload: Error | string,
     reportAttributes: object | undefined = {},
+    attachment?: string | object,
   ): Promise<BacktraceResult> {
-    const report = this.createReport(payload, reportAttributes);
+    const report = this.createReport(payload, reportAttributes, attachment);
     return new Promise<BacktraceResult>((res, rej) => {
       this.sendReport(report, (err?: Error, response?: BacktraceResult) => {
         if (err || !response) {
@@ -94,9 +97,14 @@ export class BacktraceClient {
    * Send report synchronosuly to Backtrace
    * @param payload report payload - error or string
    * @param reportAttributes attributes
+   * @param attachment data to be converted to a Blob and sent as attachment with report
    */
-  public reportSync(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceResult {
-    const report = this.createReport(payload, reportAttributes);
+  public reportSync(
+      payload: Error | string,
+      reportAttributes: object | undefined = {}, 
+      attachment?: string | object
+  ): BacktraceResult {
+    const report = this.createReport(payload, reportAttributes, attachment);
     return this.sendReport(report);
   }
 

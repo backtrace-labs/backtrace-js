@@ -4,7 +4,6 @@ import * as btReport from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
 
 export { BacktraceClient } from './backtraceClient';
-export { LogType } from './model/backtraceBreadcrumbs';
 export { BacktraceClientOptions } from './model/backtraceClientOptions';
 export { BacktraceReport as BtReport } from './model/backtraceReport';
 
@@ -35,10 +34,12 @@ export function use(client: BacktraceClient) {
  * Send report asynchronously to Backtrace
  * @param arg report payload
  * @param arg2 attributes
+ * @param attachment client-provided info sent as attachment with report
  */
 export async function report(
   arg: () => void | Error | string | object,
   arg2: object | undefined = {},
+  attachment?: string | object,
 ): Promise<BacktraceResult> {
   if (!backtraceClient) {
     throw new Error('Must call initialize method first');
@@ -50,7 +51,7 @@ export async function report(
   if (typeof arg === 'object' && arg2 === {}) {
     arg2 = arg;
   }
-  const result = await backtraceClient.reportAsync(data, arg2);
+  const result = await backtraceClient.reportAsync(data, arg2, attachment);
   if (arg instanceof Function) {
     arg();
   }
@@ -61,12 +62,17 @@ export async function report(
  * Send report synchronosuly to Backtrace
  * @param error report payload
  * @param reportAttributes attributes
+ * @param attachment client-provided info sent as attachment with report
  */
-export function reportSync(data: Error | string, attributes: object | undefined = {}): BacktraceResult {
+export function reportSync(
+    data: Error | string,
+    attributes: object | undefined = {}, 
+    attachment?: string | object,
+  ): BacktraceResult {
   if (!backtraceClient) {
     throw new Error('Must call initialize method first');
   }
-  return backtraceClient.reportSync(data, attributes);
+  return backtraceClient.reportSync(data, attributes, attachment);
 }
 
 /**
@@ -104,24 +110,30 @@ export function errorHandlerMiddleware(err: Error, req: any, resp: any, next: an
 
   /**
    * Record an event in the breadcrumbs buffer
-   * @param timestamp time of event
-   * @param type type of event
    * @param message description of event
    * @param attributes object of values related to event
+   * @param timestamp time of event
+   * @param level log level
+   * @param type type of event (e.g. "USER")
    */
-  export function dropBreadcrumb(
-    timestamp?: number,
-    type?: string,
-    message?: string,
+  export function leaveBreadcrumb(
+    message: string,
     attributes?: object,
+    timestamp?: number,
+    level?: string,
+    type?: string,
   ) {
     if (!backtraceClient) {
       throw new Error('Must call initialize method first');
     }
+    if (!message) {
+      throw new Error('Breadcrumb must include message');
+    }
     backtraceClient.breadcrumbs.add(
-      timestamp,
-      type,
       message,
       attributes,
+      timestamp,
+      level,
+      type,
     );
   }
