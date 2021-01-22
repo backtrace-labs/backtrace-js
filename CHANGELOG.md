@@ -1,7 +1,7 @@
 # Backtrace JS Release Notes
 
 ## [Version 1.0.0](https://github.com/backtrace-labs/backtrace-js/releases/tag/1.0.0)
-* `Backtrace-js` now supports tracking individual users by keeping a static identifier across errors and sessions. This will allow you to see how errors are distributed amongst the users and therefore supports priotization of issues based on how many unique users are experiencing them.
+* `Backtrace-js` now supports tracking individual users by keeping a static identifier called `GUID` across errors and sessions. This will allow you to see how errors are distributed amongst the users and therefore supports priotization of issues based on how many unique users are experiencing them.
 
 ## [Version 0.0.12](https://github.com/backtrace-labs/backtrace-js/releases/tag/0.0.12)
 
