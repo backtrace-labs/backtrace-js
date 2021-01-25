@@ -2,6 +2,7 @@ const typeManual = 'manual';
 const defaultLevel = 'info';
 
 export interface IBreadcrumb {
+        id: number,
         timestamp: number,
         level: string,
         type: string,
@@ -10,9 +11,10 @@ export interface IBreadcrumb {
 }
 
 export class Breadcrumbs {
-        public static readonly attachmentName = 'backtrace-breadcrumbs';
+        public static readonly attachmentName = 'bt-breadcrumbs-0';
         private breadcrumbLimit: number = -1;
         private _breadcrumbs: IBreadcrumb[] = [];
+        private id: number = 0;
         
         constructor(breadcrumbLimit?: number) {
                 if (!breadcrumbLimit || breadcrumbLimit <= 0) {
@@ -39,6 +41,7 @@ export class Breadcrumbs {
                 }
                 
                 const breadcrumb = {
+                        id: this.id++,
                         timestamp,
                         level,
                         type,
