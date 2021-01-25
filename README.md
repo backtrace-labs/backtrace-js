@@ -51,12 +51,12 @@ filter: function(report) {
 }
 ```
 
-##### `attachments`
-Client can optionally provide information to be treated as an attachment with error reports. Methods `report` and `reportSync` accept a string or object type which will be converted to a Blob and attached to your Backtrace error report before sending.
+#### Attachments
+Client can optionally provide information to be treated as an attachment. Methods `report` and `reportSync` accept a string or object type which will be converted to a Blob and attached to your Backtrace error report before sending.
 
 Example: 
 ```
- backtrace.report(new Error("something broke"), attributes, { items: "This will appear as an attachment on the report." });
+ backtrace.report(new Error("something broke"), attributes, { items: "This will appear as an attachment." });
 ```
 
 ## Testing
