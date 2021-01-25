@@ -1,17 +1,17 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { Agent, globalAgent } from 'https';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
 
 export class BacktraceApi {
+  private axiosInstance: AxiosInstance;
+  
   constructor(
     private backtraceUri: string,
     private timeout: number,
-    private ignoreSslCert: boolean
+    private ignoreSslCert: boolean,
   ) {
-    this.backtraceUri = backtraceUri;
-    this.timeout = timeout;
-    this.ignoreSslCert = ignoreSslCert;
+    this.axiosInstance = axios.create();
   }
 
   public async send(report: BacktraceReport): Promise<BacktraceResult> {
@@ -26,11 +26,10 @@ export class BacktraceApi {
               })
             : globalAgent,
           headers: {
-            'Content-Type': `undefined`, // https://stackoverflow.com/questions/39280438/fetch-missing-boundary-in-multipart-form-data-post
+            'Content-Type': 'undefined', // https://stackoverflow.com/questions/39280438/fetch-missing-boundary-in-multipart-form-data-post
           },
       };
-      const newAxios = axios.create();
-      const result = await newAxios.post(this.backtraceUri, formData, options);
+      const result = await this.axiosInstance.post(this.backtraceUri, formData, options);
 
       if (result.status === 429) {
         const err = new Error(`Backtrace - reached report limit.`);
