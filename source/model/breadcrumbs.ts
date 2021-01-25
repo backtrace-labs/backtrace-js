@@ -34,8 +34,8 @@ export class Breadcrumbs {
                         return;
                 }
                 // if breadcrumbs array is full, purge oldest entry
-                if (this._breadcrumbs.length === this.breadcrumbLimit) {
-                        this._breadcrumbs.shift();
+                while (this._breadcrumbs.length === this.breadcrumbLimit) {	
+                        this._breadcrumbs.shift();	
                 }
                 
                 const breadcrumb = {
