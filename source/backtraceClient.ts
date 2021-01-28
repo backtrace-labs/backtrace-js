@@ -122,6 +122,20 @@ export class BacktraceClient {
     this._backtraceApi
       .send(report)
       .then((result) => {
+        if (this.breadcrumbs.isEnabled()) {
+          this.breadcrumbs.add(
+            'Report sent to Backtrace',
+            {
+              error: result.Error, 
+              message: result.Message, 
+              objectId: result.ObjectId,  
+            }, 
+            Date.now(),
+            'error', 
+            'log'
+          );
+        };
+
         if (callback) {
           callback(result.Error, result);
         }
