@@ -27,7 +27,7 @@ export class Breadcrumbs {
         public add(
                 message: string,
                 attributes={},
-                timestamp=this.getNowUnixTimestamp(),
+                timestamp=this.getNowTimestamp(),
                 level: string=defaultLevel, 
                 type: string=typeManual,
                 ) {
@@ -51,18 +51,15 @@ export class Breadcrumbs {
                 this._breadcrumbs.push(breadcrumb);
         }
         
-        // retrieve breadcrumbs and clear the buffer
         public get() {
-                const result = this._breadcrumbs;
-                this._breadcrumbs = [];
-                return result;
+                return this._breadcrumbs;
         }
         
         public isEnabled() {
                 return this.breadcrumbLimit > 0;
         }
         
-        private getNowUnixTimestamp(): number {
-                return Math.floor(Date.now() / 1000);
+        private getNowTimestamp(): number {
+                return Date.now();
         }
 }
