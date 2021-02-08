@@ -1,6 +1,6 @@
 {
   "name": "backtrace-js",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Backtrace.io error reporting tool for client-side applications",
   "browser": "./lib/index.js",
   "main": "./lib/index.js",
@@ -22,7 +22,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:backtrace-labs/backtrace-node.git"
+    "url": "git@github.com:backtrace-labs/backtrace-js.git"
   },
   "scripts": {
     "test": "mocha --require ts-node/register -r ./tsconfig.json --project tsconfig.json test/**/*.ts",
