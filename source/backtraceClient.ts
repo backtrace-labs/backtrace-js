@@ -1,15 +1,15 @@
 import { BacktraceApi } from './backtraceApi';
 import { ClientRateLimit } from './clientRateLimit';
-import { BacktraceBreadcrumbs } from './model/backtraceBreadcrumbs';
 import { BacktraceClientOptions } from './model/backtraceClientOptions';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
+import { Breadcrumbs } from './model/breadcrumbs';
 /**
  * Backtrace client
  */
 export class BacktraceClient {
   public options: BacktraceClientOptions;
-  public breadcrumbs: BacktraceBreadcrumbs = new BacktraceBreadcrumbs(10);
+  public breadcrumbs: Breadcrumbs;
 
   private _backtraceApi: BacktraceApi;
   private _clientRateLimit: ClientRateLimit;
@@ -22,6 +22,7 @@ export class BacktraceClient {
       ...new BacktraceClientOptions(),
       ...clientOptions,
     } as BacktraceClientOptions;
+    this.breadcrumbs = new Breadcrumbs(this.options.breadcrumbLimit);
     this._backtraceApi = new BacktraceApi(this.getSubmitUrl(), this.options.timeout, this.options.ignoreSslCert);
     this._clientRateLimit = new ClientRateLimit(this.options.rateLimit);
     this.registerHandlers();
@@ -37,11 +38,17 @@ export class BacktraceClient {
   public memorize(key: string, value: any): void {
     (this.options.userAttributes as any)[key] = value;
   }
-
-  public createReport(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceReport {
+  
+  public createReport(
+      payload: Error | string,
+      reportAttributes: object | undefined = {}, 
+      attachment?: string | object,
+  ): BacktraceReport {
     // this.emit('new-report', payload, reportAttributes);
     const attributes = this.combineClientAttributes(reportAttributes);
-    const report = new BacktraceReport(payload, attributes);
+    const breadcrumbs = this.breadcrumbs.isEnabled() ? this.breadcrumbs.get() : undefined;
+    const report = new BacktraceReport(payload, attributes, breadcrumbs, attachment);
+    
     report.send = (callback) => {
       this.sendAsync(report)
         .then(() => {
@@ -67,12 +74,14 @@ export class BacktraceClient {
    * Send report asynchronously to Backtrace
    * @param payload report payload
    * @param reportAttributes attributes
+   * @param attachment data to be converted to a Blob and sent as attachment with report
    */
   public async reportAsync(
     payload: Error | string,
     reportAttributes: object | undefined = {},
+    attachment?: string | object,
   ): Promise<BacktraceResult> {
-    const report = this.createReport(payload, reportAttributes);
+    const report = this.createReport(payload, reportAttributes, attachment);
     return new Promise<BacktraceResult>((res, rej) => {
       this.sendReport(report, (err?: Error, response?: BacktraceResult) => {
         if (err || !response) {
@@ -88,9 +97,14 @@ export class BacktraceClient {
    * Send report synchronosuly to Backtrace
    * @param payload report payload - error or string
    * @param reportAttributes attributes
+   * @param attachment data to be converted to a Blob and sent as attachment with report
    */
-  public reportSync(payload: Error | string, reportAttributes: object | undefined = {}): BacktraceResult {
-    const report = this.createReport(payload, reportAttributes);
+  public reportSync(
+      payload: Error | string,
+      reportAttributes: object | undefined = {}, 
+      attachment?: string | object
+  ): BacktraceResult {
+    const report = this.createReport(payload, reportAttributes, attachment);
     return this.sendReport(report);
   }
 
@@ -105,11 +119,23 @@ export class BacktraceClient {
     if (limitResult) {
       return limitResult;
     }
-
-    report.sourceCode = this.breadcrumbs.toSourceCode();
     this._backtraceApi
       .send(report)
       .then((result) => {
+        if (this.breadcrumbs.isEnabled()) {
+          this.breadcrumbs.add(
+            'Report sent to Backtrace',
+            {
+              error: result.Error, 
+              message: result.Message, 
+              objectId: result.ObjectId,  
+            }, 
+            Date.now(),
+            'error', 
+            'log'
+          );
+        };
+
         if (callback) {
           callback(result.Error, result);
         }

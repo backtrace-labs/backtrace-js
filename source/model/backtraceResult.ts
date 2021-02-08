@@ -78,7 +78,7 @@ export class BacktraceResult {
   private readonly _rxId: string = '';
 
   get ObjectId(): string {
-    return !this._objectId ? this._objectId : this._rxId;
+    return this._objectId ? this._objectId : this._rxId;
   }
 
   get Report(): BacktraceReport {

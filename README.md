@@ -51,6 +51,28 @@ filter: function(report) {
 }
 ```
 
+#### Attachments
+Client can optionally provide information to be treated as an attachment. Methods `report` and `reportSync` accept a string or object type which will be converted to a Blob and attached to your Backtrace error report before sending.
+
+Example: 
+```
+ backtrace.report(new Error("something broke"), attributes, { items: "This will appear as an attachment." });
+```
+
+#### Breadcrumbs
+Add information about activity in your application to your error reports by calling `leaveBreadcrumb` when events happen. The breadcrumbs will appear in the Backtrace console along with the error object. 
+
+Example: 
+```
+  backtrace.leaveBreadcrumb(
+    message,
+    attributes,
+    timestamp,
+    logLevel,
+    logType,
+  );
+```
+
 ## Testing
 
 ```
@@ -58,4 +80,3 @@ npm install
 ./node_modules/.bin/browserify test/app.js --outfile test/out.js
 node test/server.js
 ```
-
