@@ -59,6 +59,20 @@ Example:
  backtrace.report(new Error("something broke"), attributes, { items: "This will appear as an attachment." });
 ```
 
+#### Breadcrumbs
+Add information about activity in your application to your error reports by calling `leaveBreadcrumb` when events happen. The breadcrumbs will appear in the Backtrace console along with the error object. 
+
+Example: 
+```
+  backtrace.leaveBreadcrumb(
+    message,
+    attributes,
+    timestamp,
+    logLevel,
+    logType,
+  );
+```
+
 ## Testing
 
 ```
