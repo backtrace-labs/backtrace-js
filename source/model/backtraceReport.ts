@@ -2,12 +2,11 @@
 const packageJson = require('./../../package.json');
 
 import FormData from 'form-data';
-import { pageStartTime } from '../index';
 import { IBacktraceData } from '../model/backtraceData';
 import { BacktraceStackTrace } from '../model/backtraceStackTrace';
 import { Breadcrumbs } from '../model/breadcrumbs';
-import { getBrowserName, getBrowserVersion, getOs, isMobile } from '../utils/agentUtils';
 import { IBreadcrumb } from './breadcrumbs';
+
 const crypto = window.crypto;
 /**
  * BacktraceReport describe current exception/message payload message to Backtrace
@@ -80,11 +79,11 @@ export class BacktraceReport {
    * @param attachment an client-provided attachment
    */
   constructor(
-      private err: Error | string = '',
-      private clientAttributes: { [index: string]: any } = {}, 
-      private breadcrumbs?: IBreadcrumb[], 
-      private attachment?: string | object, 
-    ) {
+    private err: Error | string = '',
+    private clientAttributes: { [index: string]: any } = {},
+    private breadcrumbs?: IBreadcrumb[],
+    private attachment?: string | object,
+  ) {
     if (!clientAttributes) {
       clientAttributes = {};
     }
@@ -165,7 +164,7 @@ export class BacktraceReport {
     if (this.attributes['symbolication_id']) {
       data.symbolication = 'sourcemap';
     }
-    
+
     data.attributes['guid'] = this.getGuid();
 
     return data;
@@ -176,12 +175,12 @@ export class BacktraceReport {
     const formData = new FormData();
     const blob = new Blob([JSON.stringify(reportJson)]);
     formData.append('upload_file', blob, 'upload_file.json');
-    
+
     if (this.breadcrumbs) {
       const breadcrumbBlob = new Blob([JSON.stringify(this.breadcrumbs)]);
       formData.append(Breadcrumbs.attachmentName, breadcrumbBlob, Breadcrumbs.attachmentName);
     }
-    
+
     if (this.attachment) {
       const attachmentBlob = new Blob([JSON.stringify(this.attachment)]);
       const attachmentName = `attachment_${Date.now()}`;
@@ -189,7 +188,7 @@ export class BacktraceReport {
     }
     return formData;
   }
-  
+
   public setSourceCodeOptions(tabWidth: number, contextLineCount: number) {
     this.tabWidth = tabWidth;
     this.contextLineCount = contextLineCount;
@@ -209,18 +208,15 @@ export class BacktraceReport {
   }
 
   private readBuiltInAttributes(): object {
-    return {
-      ...this.readAttributes(),
-      ...this.readErrorAttributes(),
-    };
+    return this.readErrorAttributes();
   }
 
   private detectReportType(err: Error | string): err is Error {
     return err instanceof Error;
   }
-  
+
   private getGuid(): string {
-    let guid = window.localStorage.getItem('backtrace-guid')
+    let guid = window.localStorage.getItem('backtrace-guid');
     if (!guid) {
       guid = this.generateUuid();
       window.localStorage.setItem('backtrace-guid', guid);
@@ -271,43 +267,6 @@ export class BacktraceReport {
     };
   }
 
-  private readAttributes(): object {
-    const browserName = getBrowserName();
-    return {
-      'process.age': Math.floor((new Date().getTime() - pageStartTime.getTime()) / 1000),
-      hostname: window.location && window.location.hostname,
-      referer: window.location && window.location.href,
-      'user.agent.full': navigator.userAgent,
-      'location.port': document.location.port,
-      'location.protocol': document.location.protocol,
-      'location.origin': window.location.origin,
-      'location.href': window.location.href || document.URL,
-      language: navigator.language,
-      'browser.name': browserName,
-      'browser.version': getBrowserVersion(browserName),
-      'browser.platform': navigator.platform,
-      'browser.vendor': navigator.vendor,
-      'cookies.enable': navigator.cookieEnabled,
-      'document.domain': document.domain,
-      'document.baseURI': document.baseURI,
-      'document.title': document.title,
-      'document.referrer': document.referrer,
-      mobile: isMobile(),
-      'localstorage.enable': !!window.localStorage,
-      'uname.sysname': getOs(),
-      'window.innerHeight': window.innerHeight,
-      'window.innerWidth': window.innerWidth,
-      'window.outerHeight': window.outerHeight,
-      'window.outerWidth': window.outerWidth,
-      'window.pageXOffset': window.pageXOffset,
-      'window.pageYOffset': window.pageYOffset,
-      'window.screenX': window.screenX,
-      'window.screenY': window.screenY,
-      'window.screenLeft': window.screenLeft,
-      'window.screenTop': window.screenTop,
-    };
-  }
-
   private readAnnotation(): object {
     return {
       Memory: window.performance ? window.performance : performance.timing,
@@ -327,6 +286,11 @@ export class BacktraceReport {
   }
 
   private getSerializableError() {
+    if (typeof this.err === 'string') {
+      return {
+        message: this.err,
+      };
+    }
     const serializableError: { [index: string]: string } = {};
     const self = this;
     Object.getOwnPropertyNames(this.err).forEach((key) => {

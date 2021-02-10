@@ -4,7 +4,7 @@ export class BacktraceClientOptions {
   public timeout: number = 15000;
   public endpoint!: string;
   public token?: string;
-  public userAttributes: object = {};
+  public userAttributes: object | { [index: string]: any } = {};
 
   public ignoreSslCert: boolean = false;
 
@@ -14,7 +14,7 @@ export class BacktraceClientOptions {
   public sampling?: number | undefined = undefined;
   public rateLimit: number = 0;
   public filter?: (report: BacktraceReport) => boolean = undefined;
-  
+
   public breadcrumbLimit?: number = -1;
 
   /**
