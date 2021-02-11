@@ -37,13 +37,24 @@ export class BacktraceClient {
 
   /**
    * Memorize selected values from application.
-   * Memorized attributes will be available in your next Backtrace report.
+   * Memorized attributes will be available in your Backtrace report.
    * Memorized attributes will be only available for one report.
    * @param key attribute key
    * @param value attribute value
    */
   public memorize(key: string, value: any): void {
-    (this.options.userAttributes as any)[key] = value;
+    this.attributes[key] = value;
+  }
+
+  /**
+   * Set custom client attribute
+   * Memorized attributes will be available in your Backtrace report.
+   * Memorized attributes will be only available for one report.
+   * @param key attribute key
+   * @param value attribute value
+   */
+  public setAttribute(key: string, value: any): void {
+    this.attributes[key] = value;
   }
 
   public createReport(
@@ -196,16 +207,6 @@ export class BacktraceClient {
     }
     const uriSeparator = url.endsWith('/') ? '' : '/';
     return `${this.options.endpoint}${uriSeparator}post?format=json&token=${this.options.token}`;
-  }
-
-  private combineClientAttributes(attributes: object = {}): object {
-    if (!attributes) {
-      attributes = {};
-    }
-    return {
-      ...attributes,
-      ...this.options.userAttributes,
-    };
   }
 
   private registerHandlers(): void {
