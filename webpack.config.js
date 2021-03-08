@@ -1,5 +1,9 @@
 const path = require('path');
+const webpack = require('webpack');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const package = require('./package.json');
 
 const config = {
   mode: 'production',
@@ -29,11 +33,15 @@ const config = {
     },
   },
   plugins: [
+    new webpack.DefinePlugin({
+      __VERSION__: JSON.stringify(package.version),
+    }),
     new ForkTsCheckerWebpackPlugin({
       tslint: true,
       workers: 2,
       useTypescriptIncrementalApi: false,
     }),
+    // new BundleAnalyzerPlugin(),
   ],
 };
 

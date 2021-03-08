@@ -6,7 +6,6 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "/source",
     "/lib"
   ],
   "author": "Backtrace <team@backtrace.io>",
@@ -30,31 +29,18 @@
     "format": "prettier --write \"source/**/*.ts\" \"source/**/*.js\"",
     "build": "./node_modules/.bin/webpack",
     "watch": "./node_modules/.bin/webpack --watch",
-    "build:production": "cross-env NODE_ENV=production ./node_modules/.bin/webpack -p",
+    "build:production": "NODE_ENV=production ./node_modules/.bin/webpack -p",
     "prepublish": "npm run build:production"
   },
-  "dependencies": {
-    "axios": "^0.21.1",
-    "form-data": "^3.0.0",
-    "json-stringify-safe": "^5.0.1"
-  },
   "devDependencies": {
-    "@types/chai": "^4.1.7",
-    "@types/expect": "^1.20.4",
-    "@types/json-stringify-safe": "^5.0.0",
-    "@types/mocha": "^5.2.6",
-    "@types/nock": "^9.3.1",
-    "chai": "~4.2.0",
-    "cross-env": "^5.2.0",
     "fork-ts-checker-webpack-plugin": "^1.4.3",
-    "mocha": "^5.2.0",
-    "nock": "^10.0.6",
     "ts-loader": "^6.0.4",
     "ts-node": "^8.0.3",
-    "tslint": "^5.18.0",
+    "tslint": "^6.1.2",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^4.1.3",
     "webpack": "^4.39.0",
+    "webpack-bundle-analyzer": "^4.4.0",
     "webpack-cli": "^3.3.6",
     "webpack-node-externals": "^1.7.2"
   }

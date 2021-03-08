@@ -1,11 +1,8 @@
-// tslint:disable-next-line: no-var-requires
-const packageJson = require('./../../package.json');
-
-import FormData from 'form-data';
 import { IBacktraceData } from '../model/backtraceData';
 import { BacktraceStackTrace } from '../model/backtraceStackTrace';
 import { Breadcrumbs } from '../model/breadcrumbs';
 import { IBreadcrumb } from './breadcrumbs';
+declare const __VERSION__: string;
 
 const crypto = window.crypto;
 /**
@@ -21,9 +18,9 @@ export class BacktraceReport {
   // environment version
   public readonly langVersion = navigator.userAgent;
   // Backtrace-ndoe name
-  public readonly agent = packageJson.name;
+  public readonly agent = 'backtrace-js';
   // Backtrace-js  version
-  public readonly agentVersion = packageJson.version;
+  public readonly agentVersion = __VERSION__;
   // main thread name
   public readonly mainThread = 'main';
 
@@ -61,9 +58,6 @@ export class BacktraceReport {
    * Backtrace complex objet
    */
   private annotations: { [index: string]: any } = {};
-
-  private tabWidth: number = 8;
-  private contextLineCount: number = 200;
 
   /**
    * Create new BacktraceReport - report information that will collect information
@@ -137,11 +131,11 @@ export class BacktraceReport {
     this.annotations[key] = value;
   }
 
-  public async toJson(): Promise<IBacktraceData> {
+  public toJson(): IBacktraceData {
     // why library should wait to retrieve source code data?
     // architecture decision require to pass additional parameters
     // not in constructor, but in additional method.
-    await this.collectReportInformation();
+    this.collectReportInformation();
 
     const data = {
       uuid: this.uuid,
@@ -170,15 +164,19 @@ export class BacktraceReport {
     return data;
   }
 
-  public async toFormData(): Promise<FormData> {
-    const reportJson = await this.toJson();
+  public toFormData(): FormData {
+    const reportJson = this.toJson();
     const formData = new FormData();
     const blob = new Blob([JSON.stringify(reportJson)]);
     formData.append('upload_file', blob, 'upload_file.json');
 
     if (this.breadcrumbs) {
       const breadcrumbBlob = new Blob([JSON.stringify(this.breadcrumbs)]);
-      formData.append(Breadcrumbs.attachmentName, breadcrumbBlob, Breadcrumbs.attachmentName);
+      formData.append(
+        Breadcrumbs.attachmentName,
+        breadcrumbBlob,
+        Breadcrumbs.attachmentName,
+      );
     }
 
     if (this.attachment) {
@@ -189,26 +187,23 @@ export class BacktraceReport {
     return formData;
   }
 
+  /**
+   * @deprecated This method is not supported
+   */
   public setSourceCodeOptions(tabWidth: number, contextLineCount: number) {
-    this.tabWidth = tabWidth;
-    this.contextLineCount = contextLineCount;
+    // not supported
   }
 
-  private async collectReportInformation(): Promise<void> {
+  private collectReportInformation(): void {
     // get stack trace to retrieve calling module information
     this.stackTrace = new BacktraceStackTrace(this.err);
-    this.stackTrace.parseStackFrames();
     // combine attributes
     this.attributes = {
-      ...this.readBuiltInAttributes(),
+      ...this.readErrorAttributes(),
       ...this.clientAttributes,
     };
     // combine annotations
     this.annotations = this.readAnnotation();
-  }
-
-  private readBuiltInAttributes(): object {
-    return this.readErrorAttributes();
   }
 
   private detectReportType(err: Error | string): err is Error {
@@ -299,7 +294,9 @@ export class BacktraceReport {
     return serializableError;
   }
 
-  private splitAttributesFromAnnotations(clientAttributes: { [index: string]: any }) {
+  private splitAttributesFromAnnotations(clientAttributes: {
+    [index: string]: any;
+  }) {
     for (const key in clientAttributes) {
       if (clientAttributes.hasOwnProperty(key)) {
         const element = this.clientAttributes[key];

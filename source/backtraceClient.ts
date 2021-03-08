@@ -5,7 +5,14 @@ import { BacktraceClientOptions } from './model/backtraceClientOptions';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
 import { Breadcrumbs } from './model/breadcrumbs';
-import { getBrowserName, getBrowserVersion, getOs, isMobile } from './utils/agentUtils';
+import {
+  getBrowserName,
+  getBrowserVersion,
+  getOs,
+  isMobile,
+} from './utils/agentUtils';
+declare const __VERSION__: string;
+
 /**
  * Backtrace client
  */
@@ -26,7 +33,10 @@ export class BacktraceClient {
       ...clientOptions,
     } as BacktraceClientOptions;
     this.breadcrumbs = new Breadcrumbs(this.options.breadcrumbLimit);
-    this._backtraceApi = new BacktraceApi(this.getSubmitUrl(), this.options.timeout, this.options.ignoreSslCert);
+    this._backtraceApi = new BacktraceApi(
+      this.getSubmitUrl(),
+      this.options.timeout,
+    );
     this._clientRateLimit = new ClientRateLimit(this.options.rateLimit);
     this.registerHandlers();
     this.attributes = {
@@ -62,8 +72,15 @@ export class BacktraceClient {
     reportAttributes: object | undefined = {},
     attachment?: string | object,
   ): BacktraceReport {
-    const breadcrumbs = this.breadcrumbs.isEnabled() ? this.breadcrumbs.get() : undefined;
-    const report = new BacktraceReport(payload, reportAttributes, breadcrumbs, attachment);
+    const breadcrumbs = this.breadcrumbs.isEnabled()
+      ? this.breadcrumbs.get()
+      : undefined;
+    const report = new BacktraceReport(
+      payload,
+      reportAttributes,
+      breadcrumbs,
+      attachment,
+    );
 
     report.send = (callback) => {
       this.sendAsync(report)
@@ -81,8 +98,6 @@ export class BacktraceClient {
     report.sendSync = (callback) => {
       this.sendReport(report, callback);
     };
-
-    report.setSourceCodeOptions(this.options.tabWidth, this.options.contextLineCount);
 
     return report;
   }
@@ -124,9 +139,14 @@ export class BacktraceClient {
     return this.sendReport(report);
   }
 
-  public sendReport(report: BacktraceReport, callback?: (err?: Error, res?: BacktraceResult) => void): BacktraceResult {
+  public sendReport(
+    report: BacktraceReport,
+    callback?: (err?: Error, res?: BacktraceResult) => void,
+  ): BacktraceResult {
     if (!report.uuid) {
-      throw new Error('Invalid backtrace report object. Please pass an instance of the Backtrace report object.');
+      throw new Error(
+        'Invalid backtrace report object. Please pass an instance of the Backtrace report object.',
+      );
     }
     if (this.options.filter && this.options.filter(report)) {
       return BacktraceResult.OnFilterHit(report);
@@ -180,7 +200,9 @@ export class BacktraceClient {
     return await this._backtraceApi.send(report);
   }
 
-  private testClientLimits(report: BacktraceReport): BacktraceResult | undefined {
+  private testClientLimits(
+    report: BacktraceReport,
+  ): BacktraceResult | undefined {
     if (this.samplingHit()) {
       return BacktraceResult.OnSamplingHit(report);
     }
@@ -203,7 +225,9 @@ export class BacktraceClient {
     }
 
     if (!this.options.token) {
-      throw new Error('Token is required if Backtrace-js have to build url to Backtrace');
+      throw new Error(
+        'Token is required if Backtrace-js have to build url to Backtrace',
+      );
     }
     const uriSeparator = url.endsWith('/') ? '' : '/';
     return `${this.options.endpoint}${uriSeparator}post?format=json&token=${this.options.token}`;
@@ -229,7 +253,13 @@ export class BacktraceClient {
   }
 
   private registerGlobalHandler(): void {
-    window.onerror = (msg: string | Event, url, lineNumber, columnNumber, error) => {
+    window.onerror = (
+      msg: string | Event,
+      url,
+      lineNumber,
+      columnNumber,
+      error,
+    ) => {
       if (!error) {
         if (typeof msg === 'string') {
           error = new Error(msg);
@@ -249,7 +279,9 @@ export class BacktraceClient {
     const browserName = getBrowserName();
     return {
       application: document.title,
-      'process.age': Math.floor((new Date().getTime() - pageStartTime.getTime()) / 1000),
+      'process.age': Math.floor(
+        (new Date().getTime() - pageStartTime.getTime()) / 1000,
+      ),
       hostname: window.location && window.location.hostname,
       referer: window.location && window.location.href,
       'user.agent.full': navigator.userAgent,
@@ -280,6 +312,7 @@ export class BacktraceClient {
       'window.screenY': window.screenY,
       'window.screenLeft': window.screenLeft,
       'window.screenTop': window.screenTop,
+      'backtrace.version': __VERSION__,
     };
   }
 }

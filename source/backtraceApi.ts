@@ -1,41 +1,39 @@
-import axios, { AxiosInstance } from 'axios';
-import { Agent, globalAgent } from 'https';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
 
 export class BacktraceApi {
-  private axiosInstance: AxiosInstance;
-
-  constructor(backtraceUri: string, timeout: number, ignoreSslCert: boolean) {
-    this.axiosInstance = axios.create({
-      baseURL: backtraceUri,
-      timeout,
-      httpsAgent: ignoreSslCert
-        ? new Agent({
-            rejectUnauthorized: false,
-          })
-        : globalAgent,
-      headers: {
-        'Content-Type': 'undefined', // https://stackoverflow.com/questions/39280438/fetch-missing-boundary-in-multipart-form-data-post
-      },
-    });
-  }
+  constructor(private readonly _backtraceUri: string, private readonly _timeout: number) {}
 
   public async send(report: BacktraceReport): Promise<BacktraceResult> {
     try {
-      const formData = await report.toFormData();
-      const result = await this.axiosInstance.post('', formData);
+      const formData = report.toFormData();
 
-      if (result.status === 429) {
-        const err = new Error(`Backtrace - reached report limit.`);
-        return BacktraceResult.OnError(report, err);
-      }
+      return new Promise<BacktraceResult>((res, rej) => {
+        const xmlHttpRequest = new XMLHttpRequest();
+        xmlHttpRequest.timeout = this._timeout;
+        xmlHttpRequest.open('POST', this._backtraceUri, true);
+        xmlHttpRequest.send(formData);
+        xmlHttpRequest.onload = (e) => {
+          if (xmlHttpRequest.readyState === XMLHttpRequest.DONE) {
+            if (xmlHttpRequest.status === 200) {
+              res(BacktraceResult.Ok(report, xmlHttpRequest.responseText));
+            } else if (xmlHttpRequest.status === 429) {
+              res(BacktraceResult.OnError(report, new Error(`Backtrace - reached report limit.`)));
+            } else {
+              res(
+                BacktraceResult.OnError(
+                  report,
+                  new Error(`Invalid attempt to submit error to Backtrace. Result: ${xmlHttpRequest.responseText}`),
+                ),
+              );
+            }
+          }
+        };
 
-      if (result.status !== 200) {
-        const err = new Error(`Invalid attempt to submit error to Backtrace. Result: ${result}`);
-        return BacktraceResult.OnError(report, err);
-      }
-      return BacktraceResult.Ok(report, result.data);
+        xmlHttpRequest.onerror = (e) => {
+          rej(e);
+        };
+      });
     } catch (err) {
       return BacktraceResult.OnError(report, err);
     }

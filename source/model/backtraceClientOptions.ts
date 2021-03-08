@@ -6,8 +6,6 @@ export class BacktraceClientOptions {
   public token?: string;
   public userAttributes: object | { [index: string]: any } = {};
 
-  public ignoreSslCert: boolean = false;
-
   public disableGlobalHandler: boolean = false;
   public handlePromises: boolean = false;
 

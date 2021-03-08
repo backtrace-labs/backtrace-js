@@ -18,7 +18,7 @@ export class BacktraceStackTrace {
   public readonly name = 'main';
   public stack: IBacktraceStackFrame[] = [];
 
-  private readonly stackLineRe = /\s+at (.+) \((.+):(\d+):(\d+)\)/;
+  private readonly stackLineRe = /^\s+at (?:([^\s]+) )?\(?(.+):(\d+):(\d+)\)?$/;
 
   private error: Error;
   constructor(err: Error | string) {
@@ -27,6 +27,7 @@ export class BacktraceStackTrace {
       err = new Error();
     }
     this.error = err;
+    this.parseStackFrames();
   }
 
   /**
@@ -43,7 +44,7 @@ export class BacktraceStackTrace {
   /**
    * Start parsing stack frames
    */
-  public parseStackFrames(): void {
+  private parseStackFrames(): void {
     const stackTrace = this.error.stack;
     if (!stackTrace) {
       return;
@@ -55,13 +56,14 @@ export class BacktraceStackTrace {
       if (!match || match.length < 4) {
         return;
       }
-      const backtraceLibStackFrame = match[2].indexOf('node_modules/backtrace-js') !== -1;
+      const backtraceLibStackFrame =
+        match[2].indexOf('node_modules/backtrace-js') !== -1;
       if (backtraceLibStackFrame) {
         return;
       }
 
       const stackFrame: IBacktraceStackFrame = {
-        funcName: match[1],
+        funcName: match[1] ? match[1] : 'unknown',
         library: match[2],
         line: parseInt(match[3], 10),
         column: parseInt(match[4], 10),
