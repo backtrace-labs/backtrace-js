@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "stripInternal": true,
+    "target": "es2017",
+    "lib": ["dom", "es2015", "es2016", "es2017", "esnext"],
+    "module": "commonjs",
+    "moduleResolution": "Node",
+    "sourceMap": true,
+    "outDir": "./lib",
+    "strict": true,
+    "declaration": true,
+    "typeRoots": ["./node_modules/@types", "./source/types"],
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": ["./source/*"]
+    }
+  },
+  "exclude": ["lib", "./test", "./examples"]
+}
