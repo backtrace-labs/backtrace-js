@@ -62,11 +62,6 @@ export class BacktraceStackTrace {
       if (backtraceLibStackFrame) {
         return;
       }
-      console.log(`Compare`);
-      console.log({
-        fullPath,
-        library: fullPath.substring(fullPath.lastIndexOf('/') + 1),
-      });
       const stackFrame: IBacktraceStackFrame = {
         funcName: match[1] ? match[1] : 'unknown',
         library: fullPath.substring(fullPath.lastIndexOf('/') + 1),
