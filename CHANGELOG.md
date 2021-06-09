@@ -1,5 +1,11 @@
 # Backtrace JS Release Notes
 
+## Version 1.0.2
+- Provide file name instead of full file path in the stack trace object.
+
+## Version 1.0.1
+- Package version fix
+
 ## Version 1.0.0
 
 * `Backtrace-js` now supports TypeScript. We care about your applications that using Backtrace-js library so we prepared compatible API for you. If you still want to use modern API please use `BacktraceClient` instead.

@@ -56,15 +56,20 @@ export class BacktraceStackTrace {
       if (!match || match.length < 4) {
         return;
       }
+      const fullPath = match[2];
       const backtraceLibStackFrame =
-        match[2].indexOf('node_modules/backtrace-js') !== -1;
+        fullPath.indexOf('node_modules/backtrace-js') !== -1;
       if (backtraceLibStackFrame) {
         return;
       }
-
+      console.log(`Compare`);
+      console.log({
+        fullPath,
+        library: fullPath.substring(fullPath.lastIndexOf('/') + 1),
+      });
       const stackFrame: IBacktraceStackFrame = {
         funcName: match[1] ? match[1] : 'unknown',
-        library: match[2],
+        library: fullPath.substring(fullPath.lastIndexOf('/') + 1),
         line: parseInt(match[3], 10),
         column: parseInt(match[4], 10),
       };
