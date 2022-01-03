@@ -1,4 +1,5 @@
 import { BacktraceClient } from './backtraceClient';
+import backtraceMetric from './backtraceMetric';
 import { BacktraceClientOptions } from './model/backtraceClientOptions';
 import * as btReport from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
@@ -15,8 +16,11 @@ let backtraceClient: BacktraceClient;
  * Initalize Backtrace Client and Backtrace node integration
  * @param configuration Backtrace configuration
  */
-export function initialize(configuration: BacktraceClientOptions): BacktraceClient {
+export function initialize(
+  configuration: BacktraceClientOptions,
+): BacktraceClient {
   backtraceClient = new BacktraceClient(configuration);
+  backtraceMetric(configuration) // ping metrics. Called on initialization, which ~should~(?) be called on every navigation.
   return backtraceClient;
 }
 
@@ -100,7 +104,12 @@ export function BacktraceReport(): btReport.BacktraceReport {
   return backtraceReport;
 }
 
-export function errorHandlerMiddleware(err: Error, req: any, resp: any, next: any) {
+export function errorHandlerMiddleware(
+  err: Error,
+  req: any,
+  resp: any,
+  next: any,
+) {
   if (!backtraceClient) {
     throw new Error('Must call initialize method first');
   }

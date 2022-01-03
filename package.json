@@ -33,7 +33,9 @@
     "prepublish": "npm run build:production"
   },
   "devDependencies": {
+    "@types/uuid": "^8.3.3",
     "fork-ts-checker-webpack-plugin": "^1.4.3",
+    "prettier": "^2.5.1",
     "ts-loader": "^6.0.4",
     "ts-node": "^8.0.3",
     "tslint": "^6.1.2",
@@ -43,5 +45,9 @@
     "webpack-bundle-analyzer": "^4.4.0",
     "webpack-cli": "^3.3.6",
     "webpack-node-externals": "^1.7.2"
+  },
+  "dependencies": {
+    "axios": "^0.24.0",
+    "uuid": "^8.3.2"
   }
 }

@@ -12,7 +12,13 @@ export function getBrowserVersion(name: string) {
     name = 'version';
   }
   if (name) {
-    return (new RegExp(name + '[\\/ ]([\\d\\w\\.-]+)', 'i').exec(navigator.appVersion) && RegExp.$1) || undefined;
+    return (
+      (new RegExp(name + '[\\/ ]([\\d\\w\\.-]+)', 'i').exec(
+        navigator.appVersion,
+      ) &&
+        RegExp.$1) ||
+      undefined
+    );
   } else {
     const match = navigator.appVersion.match(/version[\/ ]([\d\w\.]+)/i);
     return match && match.length > 1 ? match[1] : undefined;
@@ -56,7 +62,10 @@ export function getOs() {
     return 'Android';
   }
   // check if Linux
-  if (navigator.appVersion.indexOf('Linux') || navigator.appVersion.indexOf('X11')) {
+  if (
+    navigator.appVersion.indexOf('Linux') ||
+    navigator.appVersion.indexOf('X11')
+  ) {
     return 'Linux';
   } else {
     return 'unknown';

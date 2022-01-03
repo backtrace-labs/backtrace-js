@@ -54,15 +54,27 @@ export class BacktraceResult {
    * @returns  BacktraceResult with limit reached information
    */
   public static OnLimitReached(report: BacktraceReport): BacktraceResult {
-    return new BacktraceResult(report, 'Client report limit reached', BacktraceResultStatus.LimitReached);
+    return new BacktraceResult(
+      report,
+      'Client report limit reached',
+      BacktraceResultStatus.LimitReached,
+    );
   }
 
   public static OnSamplingHit(report: BacktraceReport): BacktraceResult {
-    return new BacktraceResult(report, 'Sampling hit', BacktraceResultStatus.SamplingHit);
+    return new BacktraceResult(
+      report,
+      'Sampling hit',
+      BacktraceResultStatus.SamplingHit,
+    );
   }
 
   public static OnFilterHit(report: BacktraceReport): BacktraceResult {
-    return new BacktraceResult(report, 'Filter hit', BacktraceResultStatus.FilterHit);
+    return new BacktraceResult(
+      report,
+      'Filter hit',
+      BacktraceResultStatus.FilterHit,
+    );
   }
   /**
    * Set result when error occurs while sending data to API
@@ -71,7 +83,12 @@ export class BacktraceResult {
    * @returns  BacktraceResult with exception information
    */
   public static OnError(report: BacktraceReport, err: Error): BacktraceResult {
-    return new BacktraceResult(report, err.message, BacktraceResultStatus.ServerError, err);
+    return new BacktraceResult(
+      report,
+      err.message,
+      BacktraceResultStatus.ServerError,
+      err,
+    );
   }
 
   private readonly _objectId: string = '';
