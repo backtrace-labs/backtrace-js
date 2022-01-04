@@ -1,23 +1,23 @@
+import { uuid } from '@src/utils';
 import { IBacktraceData } from '../model/backtraceData';
 import { BacktraceStackTrace } from '../model/backtraceStackTrace';
 import { Breadcrumbs } from '../model/breadcrumbs';
 import { IBreadcrumb } from './breadcrumbs';
 declare const __VERSION__: string;
 
-const crypto = window.crypto;
 /**
  * BacktraceReport describe current exception/message payload message to Backtrace
  */
 export class BacktraceReport {
   // report id
-  public readonly uuid: string = this.generateUuid();
+  public readonly uuid: string = uuid();
   // timestamp
   public readonly timestamp: number = Math.floor(new Date().getTime() / 1000);
   // lang
   public readonly lang = 'js';
   // environment version
   public readonly langVersion = navigator.userAgent;
-  // Backtrace-ndoe name
+  // Backtrace-node name
   public readonly agent = 'backtrace-js';
   // Backtrace-js  version
   public readonly agentVersion = __VERSION__;
@@ -213,41 +213,10 @@ export class BacktraceReport {
   private getGuid(): string {
     let guid = window.localStorage.getItem('backtrace-guid');
     if (!guid) {
-      guid = this.generateUuid();
+      guid = uuid();
       window.localStorage.setItem('backtrace-guid', guid);
     }
     return guid;
-  }
-
-  private generateUuid(): string {
-    const uuidArray = new Uint8Array(16);
-    crypto.getRandomValues(uuidArray);
-    const hexStr = (b: number) => {
-      const s = b.toString(16);
-      return b < 0x10 ? '0' + s : s;
-    };
-    let result = '';
-    let i = 0;
-    for (; i < 4; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    result += '-';
-    for (; i < 6; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    result += '-';
-    for (; i < 8; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    result += '-';
-    for (; i < 10; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    result += '-';
-    for (; i < 16; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    return result;
   }
 
   private readErrorAttributes(): object {

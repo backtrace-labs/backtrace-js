@@ -20,7 +20,7 @@ export function initialize(
   configuration: BacktraceClientOptions,
 ): BacktraceClient {
   backtraceClient = new BacktraceClient(configuration);
-  backtraceMetric(configuration) // ping metrics. Called on initialization, which ~should~(?) be called on every navigation.
+  backtraceMetric(configuration); // ping metrics. Called on initialization, which ~should~(?) be called on every navigation.
   return backtraceClient;
 }
 
