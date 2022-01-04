@@ -19,6 +19,7 @@ export default function backtraceMetric(
 export class BacktraceMetric {
   public universe;
   public token;
+  public timeout = 15000; // fifteen seconds in miliseconds
 
   /** Seconds since epoch. */
   public readonly CURRENT_TIMESTAMP: number = Math.floor(
@@ -40,9 +41,17 @@ export class BacktraceMetric {
 
   constructor(configuration: BacktraceClientOptions) {
     const universe = ''; // get universe name from configuration if possible. If not, pass in / access universe name somewhere.
-    const token = configuration?.token || '';
+
+    if (!configuration.endpoint) {
+      throw new Error(`Backtrace: missing 'endpoint' option.`);
+    }
+    if (!configuration.token) {
+      throw new Error(`Backtrace: missing 'token' option.`);
+    }
+
     this.universe = universe;
-    this.token = token;
+    this.token = configuration.token;
+    this.timeout = configuration.timeout;
   }
 
   /**
@@ -51,12 +60,6 @@ export class BacktraceMetric {
    */
   public ping() {
     this.setLastActive(this.CURRENT_TIMESTAMP); // update lastActive since ping was called, user is active
-
-    // Error handling. Send some console warn / error (?)
-    // No token
-    if (!this.token) {
-      return;
-    }
 
     // If sessionId is not set, create new session. Send unique and app launch events.
     if (!this.sessionId) {
@@ -70,7 +73,7 @@ export class BacktraceMetric {
       this.createNewSession();
       this.sendUniqueEvent(this.sessionId);
       // can also send "session length" by sending lastActive - sessionStart.
-      // This can get a sense of "session length" / "time spent on app", "session free minutes", "avg time per error" etc ?
+      // This can get a sense of "session length" / "time spent on app", "session free minutes", "avg time per error" etc
     }
 
     // handle summed events
@@ -97,7 +100,7 @@ export class BacktraceMetric {
             guid: sessionId,
             'uname.sysname': this.userAgent,
             'application.version': __VERSION__,
-            'application.session': '', // Backtrace.getAttribute("application.session"),
+            'application.session': '', // application session ?
           },
         },
       ],
@@ -130,7 +133,7 @@ export class BacktraceMetric {
             guid: sessionId,
             'uname.sysname': this.userAgent,
             'application.version': __VERSION__,
-            'application.session': '',
+            'application.session': '', // application session ?
           },
         },
       ],
@@ -150,7 +153,7 @@ export class BacktraceMetric {
       return new Promise<void>((res, rej) => {
         const http = new XMLHttpRequest();
         http.setRequestHeader('Content-type', 'application/json');
-        http.timeout = 30000; // thirty seconds in miliseconds
+        http.timeout = this.timeout;
         http.open('POST', url, true);
         http.send(data);
         http.onload = (e) => {
