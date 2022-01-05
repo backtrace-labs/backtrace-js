@@ -157,16 +157,18 @@ export class BacktraceMetrics {
         http.setRequestHeader('Content-type', 'application/json');
         http.send(data);
         http.onload = (e) => {
-          if (http.readyState === XMLHttpRequest.DONE) {
-            if (http.status === 200) {
-              res();
-            } else if (http.status === 429) {
-              rej('Backtrace - reached metric limit.');
-            } else {
-              rej(
-                `Invalid attempt to submit metric to Backtrace. Result: ${http.responseText}`,
-              );
-            }
+          if (http.readyState !== XMLHttpRequest.DONE){
+            return
+          }
+
+          if (http.status === 200) {
+            res();
+          } else if (http.status === 429) {
+            rej('Backtrace - reached metric limit.');
+          } else {
+            rej(
+              `Invalid attempt to submit metric to Backtrace. HTTP Error ${http.status}. Result: ${http.responseText}`,
+            );
           }
         };
         http.onerror = (e) => {
@@ -200,7 +202,7 @@ export class BacktraceMetrics {
    */
   private getSessionStart(): number | undefined {
     const sessionStartStr = localStorage.getItem('sessionStart');
-    return sessionStartStr ? Number(sessionStartStr) : undefined;
+    return sessionStartStr ? parseInt(sessionStartStr, 10) : undefined;
   }
 
   /**
@@ -212,7 +214,7 @@ export class BacktraceMetrics {
       this.setLastActive(this.timestamp);
       return this.timestamp;
     }
-    return Number(lastActiveStr);
+    return parseInt(lastActiveStr, 10);
   }
 
   /**
