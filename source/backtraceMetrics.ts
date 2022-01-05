@@ -1,46 +1,33 @@
 import { BacktraceClientOptions } from '.';
-import { uuid } from './utils';
+import { currentTimestamp, getBacktraceGUID, uuid } from './utils';
 
 declare const __VERSION__: string;
 
 /**
- * Function to create instance of BacktraceMetric and ping.
- */
-export default function backtraceMetric(
-  configuration: BacktraceClientOptions,
-): void {
-  new BacktraceMetric(configuration).ping();
-}
-
-/**
  * Handles Backtrace Metrics.
- * TODO: Consider converting to a static class since an instance is only created to call a single function once.
  */
-export class BacktraceMetric {
-  public universe;
-  public token;
-  public timeout = 15000; // fifteen seconds in miliseconds
+export class BacktraceMetrics {
+  private readonly universe: string;
+  private readonly token: string;
+  private readonly timeout: number  = 15000; // Fifteen seconds in milliseconds.
+  private readonly persistenceInterval: number  = 1800000; // Thirty minutes in milliseconds.
+  private readonly heartbeatInterval: number  = 60000; // One minutes in milliseconds.
 
   /** Seconds since epoch. */
-  public readonly CURRENT_TIMESTAMP: number = Math.floor(
-    new Date().getTime() / 1000,
-  );
-  /** Thirty minutes in seconds. */
-  public readonly THIRTY_MINUTES = 1800;
+  private readonly timestamp = currentTimestamp()
 
-  public readonly userAgent = navigator.userAgent;
-  public readonly applicationName = 'backtrace-js';
-  public readonly applicationVersion = __VERSION__;
+  // TODO: get values from common location, also in BacktraceReport
+  private readonly userAgent = navigator.userAgent;
+  private readonly applicationName = 'backtrace-js';
+  private readonly applicationVersion = __VERSION__;
 
-  // These fields are stored in localStorage for persistence.
-  public sessionId = this.getSessionId();
-  public lastActive = this.getLastActive();
-  public sessionStart = this.getSessionStart();
+  private readonly guid = getBacktraceGUID();
 
-  private DIRECTORY = 'events-test'; // api endpoint ex. 'https://<directory>.backtrace.io/api/...'. Should just be 'events'
+  public hostname = 'https://events.backtrace.io';
 
   constructor(configuration: BacktraceClientOptions) {
-    const universe = ''; // get universe name from configuration if possible. If not, pass in / access universe name somewhere.
+    // TODO: HARDCODED VALUE, MUST CHANGE
+    const universe = 'cd03'; // get universe name from configuration if possible. If not, pass in / access universe name somewhere.
 
     if (!configuration.endpoint) {
       throw new Error(`Backtrace: missing 'endpoint' option.`);
@@ -52,56 +39,68 @@ export class BacktraceMetric {
     this.universe = universe;
     this.token = configuration.token;
     this.timeout = configuration.timeout;
+
+    this.persistSession(); // Create/persist session on construction.
+    // Persist session if page is focused on heartbeat interval
+    setInterval(() => this.persistIfFocused(), this.heartbeatInterval);
   }
 
   /**
-   * Handle sessions and events. When pinged / called, will create or manage current session and send unique/summed events
+   * Handle persisting of session. When called, will create or manage current session.
    * when appropriate.
    */
-  public ping() {
-    this.setLastActive(this.CURRENT_TIMESTAMP); // update lastActive since ping was called, user is active
-
+  private persistSession(): void {
+    const sessionId = this.getSessionId();
     // If sessionId is not set, create new session. Send unique and app launch events.
-    if (!this.sessionId) {
+    if (!sessionId) {
       const newSessionId = this.createNewSession();
-      this.sendUniqueEvent(newSessionId);
+      this.sendUniqueEvent(this.guid, newSessionId);
       // An "application launch" loosely / temporarily means first session creation.
-      this.sendSummedEvent(newSessionId, 'application-launches');
+      this.sendSummedEvent(this.guid, newSessionId, 'application-launches');
 
-      // If sessionId is set and lastActive is over 30 minutes ago, create new session only.
-    } else if (this.lastActive < this.CURRENT_TIMESTAMP - this.THIRTY_MINUTES) {
+      // If sessionId is set and lastActive is over persistenceInterval, create new session and send unique event.
+    } else if (this.getLastActive() + 10000 < (this.timestamp * 1000) - this.persistenceInterval) {
       this.createNewSession();
-      this.sendUniqueEvent(this.sessionId);
-      // can also send "session length" by sending lastActive - sessionStart.
-      // This can get a sense of "session length" / "time spent on app", "session free minutes", "avg time per error" etc
+      this.sendUniqueEvent(this.guid, sessionId);
     }
+    // Can add else clause to send interval summed events.
+    // ex. "session length" by sending lastActive - sessionStart.
+    // This can get a sense of "session length" / "time spent on app", "error free minutes", "avg time per error" etc.
 
-    // handle summed events
-    // ex. page load / event
+    this.setLastActive(this.timestamp); // update lastActive. If this function is called, user is active.
+  }
+
+  /**
+   * Persist session if page is focused.
+   */
+  private persistIfFocused() : void {
+    if(!document.hidden) {
+      this.persistSession()
+    }
   }
 
   /**
    * Send POST to unique-events API endpoint
    */
-  private async sendUniqueEvent(sessionId: string): Promise<void> {
-    const endpoint = `https://${this.DIRECTORY}.backtrace.io/api/unique-events/submit?universe=${this.universe}&token=${this.token}`;
+  private async sendUniqueEvent(guid: string, sessionId: string): Promise<void> {
+    const endpoint = `${this.hostname}/api/unique-events/submit?universe=${this.universe}&token=${this.token}`;
 
     const payload = {
       application: this.applicationName,
-      appversion: __VERSION__,
+      appversion: this.applicationVersion,
       metadata: {
         dropped_events: 0,
       },
       unique_events: [
         {
-          timestamp: this.CURRENT_TIMESTAMP,
-          unique: sessionId,
+          timestamp: this.timestamp,
           attributes: {
-            guid: sessionId,
+            guid,
+            'application.version': this.applicationVersion,
+            'application.session': sessionId, // application session ?
             'uname.sysname': this.userAgent,
-            'application.version': __VERSION__,
-            'application.session': '', // application session ?
           },
+          unique: ['guid'],
         },
       ],
     };
@@ -114,26 +113,27 @@ export class BacktraceMetric {
    * Send POST to summed-events API endpoint
    */
   private async sendSummedEvent(
+    guid: string,
     sessionId: string,
     metricGroup: string,
   ): Promise<void> {
-    const endpoint = `https://${this.DIRECTORY}.backtrace.io/api/summed-events/submit?universe=${this.universe}&token=${this.token}`;
+    const endpoint = `${this.hostname}/api/summed-events/submit?universe=${this.universe}&token=${this.token}`;
 
     const payload = {
       application: this.applicationName,
-      appversion: __VERSION__,
+      appversion: this.applicationVersion,
       metadata: {
         dropped_events: 0,
       },
       summed_events: [
         {
-          timestamp: this.CURRENT_TIMESTAMP,
+          timestamp: this.timestamp,
           metric_group: metricGroup,
           attributes: {
-            guid: sessionId,
+            guid,
             'uname.sysname': this.userAgent,
-            'application.version': __VERSION__,
-            'application.session': '', // application session ?
+            'application.version': this.applicationVersion,
+            'application.session': sessionId, // application session ?
           },
         },
       ],
@@ -152,9 +152,9 @@ export class BacktraceMetric {
     try {
       return new Promise<void>((res, rej) => {
         const http = new XMLHttpRequest();
-        http.setRequestHeader('Content-type', 'application/json');
         http.timeout = this.timeout;
         http.open('POST', url, true);
+        http.setRequestHeader('Content-type', 'application/json');
         http.send(data);
         http.onload = (e) => {
           if (http.readyState === XMLHttpRequest.DONE) {
@@ -191,8 +191,7 @@ export class BacktraceMetric {
   private createNewSession(): string {
     const newSessionId = uuid();
     localStorage.setItem('sessionId', newSessionId);
-    localStorage.setItem('sessionStart', this.CURRENT_TIMESTAMP.toString());
-    this.sessionId = newSessionId;
+    localStorage.setItem('sessionStart', this.timestamp.toString());
     return newSessionId;
   }
 
@@ -210,8 +209,8 @@ export class BacktraceMetric {
   private getLastActive(): number {
     const lastActiveStr = localStorage.getItem('lastActive');
     if (!lastActiveStr) {
-      this.setLastActive(this.CURRENT_TIMESTAMP);
-      return this.CURRENT_TIMESTAMP;
+      this.setLastActive(this.timestamp);
+      return this.timestamp;
     }
     return Number(lastActiveStr);
   }
@@ -220,7 +219,7 @@ export class BacktraceMetric {
    * Set time to localStorage "lastActive"
    * @param time Integer seconds since epoch
    */
-  private setLastActive(time = this.CURRENT_TIMESTAMP): void {
+  private setLastActive(time = this.timestamp): void {
     localStorage.setItem('lastActive', time.toString());
   }
 }

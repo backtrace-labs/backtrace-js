@@ -44,7 +44,7 @@ export class BacktraceApi {
           rej(e);
         };
       });
-    } catch (err: unknown) {
+    } catch (err) {
       return BacktraceResult.OnError(report, err as Error);
     }
   }

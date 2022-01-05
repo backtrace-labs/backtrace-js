@@ -1,4 +1,4 @@
-import { uuid } from '@src/utils';
+import { currentTimestamp, getBacktraceGUID, uuid } from '@src/utils';
 import { IBacktraceData } from '../model/backtraceData';
 import { BacktraceStackTrace } from '../model/backtraceStackTrace';
 import { Breadcrumbs } from '../model/breadcrumbs';
@@ -12,7 +12,7 @@ export class BacktraceReport {
   // report id
   public readonly uuid: string = uuid();
   // timestamp
-  public readonly timestamp: number = Math.floor(new Date().getTime() / 1000);
+  public readonly timestamp = currentTimestamp();
   // lang
   public readonly lang = 'js';
   // environment version
@@ -159,7 +159,7 @@ export class BacktraceReport {
       data.symbolication = 'sourcemap';
     }
 
-    data.attributes['guid'] = this.getGuid();
+    data.attributes['guid'] = getBacktraceGUID();
 
     return data;
   }
@@ -208,15 +208,6 @@ export class BacktraceReport {
 
   private detectReportType(err: Error | string): err is Error {
     return err instanceof Error;
-  }
-
-  private getGuid(): string {
-    let guid = window.localStorage.getItem('backtrace-guid');
-    if (!guid) {
-      guid = uuid();
-      window.localStorage.setItem('backtrace-guid', guid);
-    }
-    return guid;
   }
 
   private readErrorAttributes(): object {

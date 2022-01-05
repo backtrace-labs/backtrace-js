@@ -1,4 +1,5 @@
 import { BacktraceApi } from './backtraceApi';
+import { BacktraceMetrics } from './backtraceMetrics';
 import { ClientRateLimit } from './clientRateLimit';
 import { pageStartTime } from './index';
 import { BacktraceClientOptions } from './model/backtraceClientOptions';
@@ -22,6 +23,7 @@ export class BacktraceClient {
   public readonly attributes: { [index: string]: any };
 
   private _backtraceApi: BacktraceApi;
+  private _backtraceMetrics: BacktraceMetrics;
   private _clientRateLimit: ClientRateLimit;
 
   constructor(clientOptions: BacktraceClientOptions) {
@@ -43,6 +45,7 @@ export class BacktraceClient {
       ...this.readAttributes(),
       ...this.options.userAttributes,
     };
+    this._backtraceMetrics = new BacktraceMetrics(clientOptions)
   }
 
   /**

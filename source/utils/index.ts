@@ -3,6 +3,7 @@
  */
 
 const crypto = window.crypto; // needed for uuid function
+
 /**
  * Generate a UUID
  */
@@ -35,4 +36,23 @@ export function uuid(): string {
     result += hexStr(uuidArray[i]);
   }
   return result;
+}
+
+/**
+ * Get unix time in seconds.
+ */
+export function currentTimestamp(): number {
+  return Math.floor(new Date().getTime() / 1000);
+}
+
+/**
+ * Get 'backtrace-guid' from localStorage. Will create and store if not set.
+ */
+export function getBacktraceGUID(): string {
+  let guid = window.localStorage.getItem('backtrace-guid');
+  if (!guid) {
+    guid = uuid();
+    window.localStorage.setItem('backtrace-guid', guid);
+  }
+  return guid;
 }
