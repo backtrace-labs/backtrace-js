@@ -1,9 +1,9 @@
-import { currentTimestamp, getBacktraceGUID, uuid } from '@src/utils';
 import { IBacktraceData } from '../model/backtraceData';
 import { BacktraceStackTrace } from '../model/backtraceStackTrace';
 import { Breadcrumbs } from '../model/breadcrumbs';
 import { IBreadcrumb } from './breadcrumbs';
-declare const __VERSION__: string;
+import { APP_NAME, USER_AGENT, VERSION, LANG, THREAD } from '../consts/application';
+import { currentTimestamp, getBacktraceGUID, uuid } from '../utils';
 
 /**
  * BacktraceReport describe current exception/message payload message to Backtrace
@@ -14,15 +14,15 @@ export class BacktraceReport {
   // timestamp
   public readonly timestamp = currentTimestamp();
   // lang
-  public readonly lang = 'js';
+  public readonly lang = LANG;
   // environment version
-  public readonly langVersion = navigator.userAgent;
+  public readonly langVersion = USER_AGENT;
   // Backtrace-node name
-  public readonly agent = 'backtrace-js';
+  public readonly agent = APP_NAME;
   // Backtrace-js  version
-  public readonly agentVersion = __VERSION__;
+  public readonly agentVersion = VERSION;
   // main thread name
-  public readonly mainThread = 'main';
+  public readonly mainThread = THREAD;
 
   public sourceCode: { text: string } | undefined;
 

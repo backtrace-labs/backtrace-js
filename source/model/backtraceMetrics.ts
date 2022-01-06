@@ -1,7 +1,7 @@
-import { BacktraceClientOptions } from '.';
-import { currentTimestamp, getBacktraceGUID, uuid } from './utils';
-
-declare const __VERSION__: string;
+import { BacktraceClientOptions } from '..';
+import { currentTimestamp, getBacktraceGUID, getEndpointParams, uuid } from '../utils';
+import { APP_NAME, USER_AGENT, VERSION } from '../consts/application';
+import { SEC_TO_MILLIS } from '../consts';
 
 /**
  * Handles Backtrace Metrics.
@@ -13,32 +13,32 @@ export class BacktraceMetrics {
   private readonly persistenceInterval: number  = 1800000; // Thirty minutes in milliseconds.
   private readonly heartbeatInterval: number  = 60000; // One minutes in milliseconds.
 
-  /** Seconds since epoch. */
   private readonly timestamp = currentTimestamp()
-
-  // TODO: get values from common location, also in BacktraceReport
-  private readonly userAgent = navigator.userAgent;
-  private readonly applicationName = 'backtrace-js';
-  private readonly applicationVersion = __VERSION__;
+  private readonly userAgent = USER_AGENT;
+  private readonly applicationName = APP_NAME;
+  private readonly applicationVersion = VERSION;
 
   private readonly guid = getBacktraceGUID();
 
   public hostname = 'https://events.backtrace.io';
 
   constructor(configuration: BacktraceClientOptions) {
-    // TODO: HARDCODED VALUE, MUST CHANGE
-    const universe = 'cd03'; // get universe name from configuration if possible. If not, pass in / access universe name somewhere.
-
     if (!configuration.endpoint) {
       throw new Error(`Backtrace: missing 'endpoint' option.`);
     }
-    if (!configuration.token) {
-      throw new Error(`Backtrace: missing 'token' option.`);
+    const {universe, token} = getEndpointParams(configuration.endpoint)
+
+    if(!universe) {
+      throw new Error(`Backtrace: 'universe' could not be parsed from the endpoint.`);
+    }
+
+    if(!token && !configuration.token) {
+      throw new Error(`Backtrace: missing 'token' option or it could not be parsed from the endpoint.`);
     }
 
     this.universe = universe;
-    this.token = configuration.token;
-    this.timeout = configuration.timeout;
+    this.token = configuration.token || token || ''; // default '' case needed since type checking isn't certain that type can not be undefined.
+    this.timeout = configuration.timeout;  
 
     this.persistSession(); // Create/persist session on construction.
     // Persist session if page is focused on heartbeat interval
@@ -50,16 +50,17 @@ export class BacktraceMetrics {
    * when appropriate.
    */
   private persistSession(): void {
-    const sessionId = this.getSessionId();
+    const sessionId = this.getSessionId() || uuid();
+
     // If sessionId is not set, create new session. Send unique and app launch events.
     if (!sessionId) {
       const newSessionId = this.createNewSession();
       this.sendUniqueEvent(this.guid, newSessionId);
       // An "application launch" loosely / temporarily means first session creation.
-      this.sendSummedEvent(this.guid, newSessionId, 'application-launches');
+      this.sendSummedEvent(this.guid, newSessionId, 'Application Launches');
 
       // If sessionId is set and lastActive is over persistenceInterval, create new session and send unique event.
-    } else if (this.getLastActive() + 10000 < (this.timestamp * 1000) - this.persistenceInterval) {
+    } else if (this.getLastActive() < (this.timestamp * SEC_TO_MILLIS) - this.persistenceInterval) {
       this.createNewSession();
       this.sendUniqueEvent(this.guid, sessionId);
     }

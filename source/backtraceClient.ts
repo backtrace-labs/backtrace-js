@@ -1,5 +1,5 @@
 import { BacktraceApi } from './backtraceApi';
-import { BacktraceMetrics } from './backtraceMetrics';
+import { BacktraceMetrics } from './model/backtraceMetrics';
 import { ClientRateLimit } from './clientRateLimit';
 import { pageStartTime } from './index';
 import { BacktraceClientOptions } from './model/backtraceClientOptions';

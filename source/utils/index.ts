@@ -1,7 +1,3 @@
-/*
- * This file contains general utility functions.
- */
-
 const crypto = window.crypto; // needed for uuid function
 
 /**
@@ -39,10 +35,10 @@ export function uuid(): string {
 }
 
 /**
- * Get unix time in seconds.
+ * Current unix time in seconds.
  */
-export function currentTimestamp(): number {
-  return Math.floor(new Date().getTime() / 1000);
+export function currentTimestamp(millis=false): number {
+  return Math.floor(new Date().getTime() / (millis ? 1 : 1000));
 }
 
 /**
@@ -55,4 +51,22 @@ export function getBacktraceGUID(): string {
     window.localStorage.setItem('backtrace-guid', guid);
   }
   return guid;
+}
+
+type EndpointParameters = {
+  universe: string | undefined
+  token: string | undefined
+}
+/**
+ * Get universe and token from the endpoint.
+ */
+export function getEndpointParams(endpoint: string, hostname='backtrace.io'): EndpointParameters {
+
+  const regex = new RegExp(`${hostname}\/([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_+=]+)\/`)
+  const match = endpoint.match(regex)
+
+  return {
+    universe: match?.[1],
+    token: match?.[2],
+  }
 }
