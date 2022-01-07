@@ -2,7 +2,13 @@ import { IBacktraceData } from '../model/backtraceData';
 import { BacktraceStackTrace } from '../model/backtraceStackTrace';
 import { Breadcrumbs } from '../model/breadcrumbs';
 import { IBreadcrumb } from './breadcrumbs';
-import { APP_NAME, USER_AGENT, VERSION, LANG, THREAD } from '../consts/application';
+import {
+  APP_NAME,
+  USER_AGENT,
+  VERSION,
+  LANG,
+  THREAD,
+} from '../consts/application';
 import { currentTimestamp, getBacktraceGUID, uuid } from '../utils';
 
 /**

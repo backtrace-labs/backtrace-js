@@ -23,7 +23,7 @@ export class BacktraceClient {
   public readonly attributes: { [index: string]: any };
 
   private _backtraceApi: BacktraceApi;
-  private _backtraceMetrics: BacktraceMetrics;
+  public readonly _backtraceMetrics: BacktraceMetrics;
   private _clientRateLimit: ClientRateLimit;
 
   constructor(clientOptions: BacktraceClientOptions) {
@@ -45,7 +45,7 @@ export class BacktraceClient {
       ...this.readAttributes(),
       ...this.options.userAttributes,
     };
-    this._backtraceMetrics = new BacktraceMetrics(clientOptions)
+    this._backtraceMetrics = new BacktraceMetrics(clientOptions);
   }
 
   /**
