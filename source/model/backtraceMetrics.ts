@@ -1,4 +1,5 @@
 import { BacktraceClientOptions } from '..';
+import { BacktraceReport } from './backtraceReport'
 import {
   currentTimestamp,
   getBacktraceGUID,
@@ -25,6 +26,8 @@ export class BacktraceMetrics {
   private readonly userAgent = USER_AGENT;
   private readonly applicationName = APP_NAME;
   private readonly applicationVersion = VERSION;
+
+  private readonly eventAttributes = this.getEventAttributes()
 
   private summedEndpoint: string;
   private uniqueEndpoint: string;
@@ -55,7 +58,7 @@ export class BacktraceMetrics {
     }
 
     this.universe = universe;
-    this.token = configuration.token || token || ''; // default '' case needed since type checking isn't certain that type can not be undefined.
+    this.token = (configuration.token || token) as string;
     this.timeout = configuration.timeout;
     this.hostname = hostname;
 
@@ -129,12 +132,7 @@ export class BacktraceMetrics {
       unique_events: [
         {
           timestamp: currentTimestamp(),
-          attributes: {
-            guid: this.guid,
-            'application.version': this.applicationVersion,
-            'application.session': this.sessionId,
-            'uname.sysname': this.userAgent,
-          },
+          attributes: this.eventAttributes,
           unique: ['guid'],
         },
       ],
@@ -157,17 +155,29 @@ export class BacktraceMetrics {
         {
           timestamp: currentTimestamp(),
           metric_group: metricGroup,
-          attributes: {
-            guid: this.guid,
-            'uname.sysname': this.userAgent,
-            'application.version': this.applicationVersion,
-            'application.session': this.sessionId,
-          },
+          attributes: this.eventAttributes,
         },
       ],
     };
 
     await post(this.summedEndpoint, payload);
+  }
+
+  private getEventAttributes(): {[index: string]: any} {
+    const reportAttributes = new BacktraceReport().toJson();
+    return {
+      guid: this.guid,
+      'application.version': this.applicationVersion,
+      'application.session': this.sessionId,
+      'uname.sysname': this.userAgent,
+      annotations: reportAttributes.annotations,
+      classifiers: reportAttributes.classifiers,
+      lang: reportAttributes.lang,
+      langVersion: reportAttributes.langVersion,
+      mainThread: reportAttributes.mainThread,
+      threads: reportAttributes.threads,
+      uuid: reportAttributes.uuid,
+    }
   }
 
   /**
