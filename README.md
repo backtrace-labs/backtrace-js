@@ -6,15 +6,15 @@ Backtrace error reporting tool for client-side JavaScript.
 
 ```js
 // Import backtrace-js with your favorite package manager.
-import * as bt from 'backtrace-js';
+import * as backtrace from 'backtrace-js';
 
-bt.initialize({
-  endpoint: `https://console.backtrace.io:${BACKTRACE_PORT}`,
-  token: '51cc8e69c5b62fa8c72dc963e730f1e8eacbd243aeafc35d08d05ded9a024121',
+backtrace.initialize({
+  endpoint: 'https://submit.backtrace.io/<universe>/<submit_token>/json',
+  token: <submit_token>
 });
 
 // Later, when you have an error:
-bt.report(new Error('something broke'));
+backtrace.report(new Error('something broke'));
 ```
 
 ## Documentation

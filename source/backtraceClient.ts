@@ -2,14 +2,16 @@ import { BacktraceApi } from './backtraceApi';
 import { ClientRateLimit } from './clientRateLimit';
 import { pageStartTime } from './index';
 import { BacktraceClientOptions } from './model/backtraceClientOptions';
+import { BacktraceMetrics } from './model/backtraceMetrics';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
 import { Breadcrumbs } from './model/breadcrumbs';
+import { getBacktraceGUID } from './utils';
 import {
   getBrowserName,
   getBrowserVersion,
   getOs,
-  isMobile,
+  isMobile
 } from './utils/agentUtils';
 declare const __VERSION__: string;
 
@@ -22,6 +24,7 @@ export class BacktraceClient {
   public readonly attributes: { [index: string]: any };
 
   private _backtraceApi: BacktraceApi;
+  public readonly _backtraceMetrics: BacktraceMetrics;
   private _clientRateLimit: ClientRateLimit;
 
   constructor(clientOptions: BacktraceClientOptions) {
@@ -39,12 +42,17 @@ export class BacktraceClient {
     );
     this._clientRateLimit = new ClientRateLimit(this.options.rateLimit);
     this.registerHandlers();
-    this.attributes = {
-      ...this.readAttributes(),
-      ...this.options.userAttributes,
-    };
+    
+    this.attributes = this.getClientAttributes();
+    this._backtraceMetrics = new BacktraceMetrics(clientOptions, () => { return this.getClientAttributes()});
   }
 
+  private getClientAttributes(){
+    return {
+      ...this.readAttributes(),
+      ...this.options.userAttributes,
+    }
+  }
   /**
    * Memorize selected values from application.
    * Memorized attributes will be available in your Backtrace report.
@@ -313,6 +321,7 @@ export class BacktraceClient {
       'window.screenLeft': window.screenLeft,
       'window.screenTop': window.screenTop,
       'backtrace.version': __VERSION__,
+      guid: getBacktraceGUID(),
     };
   }
 }

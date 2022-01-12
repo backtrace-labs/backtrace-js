@@ -1,6 +1,6 @@
 {
   "name": "backtrace-js",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Backtrace.io error reporting tool for client-side applications",
   "browser": "./lib/index.js",
   "main": "./lib/index.js",
@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "fork-ts-checker-webpack-plugin": "^1.4.3",
+    "prettier": "^2.5.1",
     "ts-loader": "^6.0.4",
     "ts-node": "^8.0.3",
     "tslint": "^6.1.2",

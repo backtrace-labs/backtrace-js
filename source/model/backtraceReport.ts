@@ -2,27 +2,33 @@ import { IBacktraceData } from '../model/backtraceData';
 import { BacktraceStackTrace } from '../model/backtraceStackTrace';
 import { Breadcrumbs } from '../model/breadcrumbs';
 import { IBreadcrumb } from './breadcrumbs';
-declare const __VERSION__: string;
+import {
+  APP_NAME,
+  USER_AGENT,
+  VERSION,
+  LANG,
+  THREAD,
+} from '../consts/application';
+import { currentTimestamp, uuid } from '../utils';
 
-const crypto = window.crypto;
 /**
  * BacktraceReport describe current exception/message payload message to Backtrace
  */
 export class BacktraceReport {
   // report id
-  public readonly uuid: string = this.generateUuid();
+  public readonly uuid: string = uuid();
   // timestamp
-  public readonly timestamp: number = Math.floor(new Date().getTime() / 1000);
+  public readonly timestamp = currentTimestamp();
   // lang
-  public readonly lang = 'js';
+  public readonly lang = LANG;
   // environment version
-  public readonly langVersion = navigator.userAgent;
-  // Backtrace-ndoe name
-  public readonly agent = 'backtrace-js';
+  public readonly langVersion = USER_AGENT;
+  // Backtrace-node name
+  public readonly agent = APP_NAME;
   // Backtrace-js  version
-  public readonly agentVersion = __VERSION__;
+  public readonly agentVersion = VERSION;
   // main thread name
-  public readonly mainThread = 'main';
+  public readonly mainThread = THREAD;
 
   public sourceCode: { text: string } | undefined;
 
@@ -159,8 +165,6 @@ export class BacktraceReport {
       data.symbolication = 'sourcemap';
     }
 
-    data.attributes['guid'] = this.getGuid();
-
     return data;
   }
 
@@ -208,46 +212,6 @@ export class BacktraceReport {
 
   private detectReportType(err: Error | string): err is Error {
     return err instanceof Error;
-  }
-
-  private getGuid(): string {
-    let guid = window.localStorage.getItem('backtrace-guid');
-    if (!guid) {
-      guid = this.generateUuid();
-      window.localStorage.setItem('backtrace-guid', guid);
-    }
-    return guid;
-  }
-
-  private generateUuid(): string {
-    const uuidArray = new Uint8Array(16);
-    crypto.getRandomValues(uuidArray);
-    const hexStr = (b: number) => {
-      const s = b.toString(16);
-      return b < 0x10 ? '0' + s : s;
-    };
-    let result = '';
-    let i = 0;
-    for (; i < 4; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    result += '-';
-    for (; i < 6; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    result += '-';
-    for (; i < 8; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    result += '-';
-    for (; i < 10; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    result += '-';
-    for (; i < 16; i += 1) {
-      result += hexStr(uuidArray[i]);
-    }
-    return result;
   }
 
   private readErrorAttributes(): object {

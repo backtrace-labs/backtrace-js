@@ -15,6 +15,8 @@ export class BacktraceClientOptions {
 
   public breadcrumbLimit?: number = -1;
 
+  public metricsSubmissionUrl?: string;
+
   /**
    * @deprecated
    * Please don't use this option anymore
