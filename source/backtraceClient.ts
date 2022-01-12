@@ -6,6 +6,7 @@ import { BacktraceMetrics } from './model/backtraceMetrics';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
 import { Breadcrumbs } from './model/breadcrumbs';
+import { getBacktraceGUID } from './utils';
 import {
   getBrowserName,
   getBrowserVersion,
@@ -320,6 +321,7 @@ export class BacktraceClient {
       'window.screenLeft': window.screenLeft,
       'window.screenTop': window.screenTop,
       'backtrace.version': __VERSION__,
+      guid: getBacktraceGUID(),
     };
   }
 }

@@ -9,7 +9,7 @@ import {
   LANG,
   THREAD,
 } from '../consts/application';
-import { currentTimestamp, getBacktraceGUID, uuid } from '../utils';
+import { currentTimestamp, uuid } from '../utils';
 
 /**
  * BacktraceReport describe current exception/message payload message to Backtrace
@@ -164,8 +164,6 @@ export class BacktraceReport {
     if (this.attributes['symbolication_id']) {
       data.symbolication = 'sourcemap';
     }
-
-    data.attributes['guid'] = getBacktraceGUID();
 
     return data;
   }

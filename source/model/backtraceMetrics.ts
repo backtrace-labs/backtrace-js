@@ -3,7 +3,6 @@ import { SEC_TO_MILLIS } from '../consts';
 import { APP_NAME, USER_AGENT, VERSION } from '../consts/application';
 import {
   currentTimestamp,
-  getBacktraceGUID,
   getEndpointParams,
   post,
   uuid
@@ -17,7 +16,6 @@ export class BacktraceMetrics {
   private readonly token: string;
   private readonly hostname: string;
 
-  private readonly timeout: number = 15000; // Fifteen seconds in milliseconds.
   private readonly persistenceInterval: number = 1800000; // Thirty minutes in milliseconds.
   private readonly heartbeatInterval: number = 60000; // One minutes in milliseconds.
 
@@ -26,12 +24,9 @@ export class BacktraceMetrics {
   private readonly applicationName = APP_NAME;
   private readonly applicationVersion = VERSION;
 
-  private readonly eventAttributes = this.getEventAttributes()
-
   private summedEndpoint: string;
   private uniqueEndpoint: string;
 
-  private readonly guid;
   private sessionId;
   private lastActive;
 
@@ -58,13 +53,11 @@ export class BacktraceMetrics {
 
     this.universe = universe;
     this.token = (configuration.token || token) as string;
-    this.timeout = configuration.timeout;
     this.hostname = configuration.metricsSubmissionUrl ?? 'https://events.backtrace.io';
 
-    this.summedEndpoint = `${this.hostname}/api/unique-events/submit?universe=${this.universe}&token=${this.token}`;
-    this.uniqueEndpoint = `${this.hostname}/api/summed-events/submit?universe=${this.universe}&token=${this.token}`;
+    this.summedEndpoint = `${this.hostname}/api/summed-events/submit?universe=${this.universe}&token=${this.token}`;
+    this.uniqueEndpoint = `${this.hostname}/api/unique-events/submit?universe=${this.universe}&token=${this.token}`;
 
-    this.guid = getBacktraceGUID();
     this.sessionId = this.getSessionId();
     this.lastActive = this.getLastActive();
 
@@ -100,7 +93,7 @@ export class BacktraceMetrics {
       // if lastActive is not defined, the page was just launched; use current timestamp as lastActive.
     } else if (
       (this.lastActive || this.timestamp) <
-      this.timestamp * SEC_TO_MILLIS - this.persistenceInterval
+      this.timestamp - (this.persistenceInterval / SEC_TO_MILLIS)
     ) {
       this.createNewSession();
       this.sendUniqueEvent();
@@ -130,12 +123,10 @@ export class BacktraceMetrics {
       },
       unique_events: [
         {
-          ...{
           timestamp: currentTimestamp(),
           unique: ['guid'],
+          attributes: this.getEventAttributes(),
         },
-        ...this.getEventAttributes()
-      },
       ],
     };
 
@@ -156,7 +147,7 @@ export class BacktraceMetrics {
         {
           timestamp: currentTimestamp(),
           metric_group: metricGroup,
-          attributes: this.eventAttributes,
+          attributes: this.getEventAttributes(),
         },
       ],
     };
@@ -166,12 +157,7 @@ export class BacktraceMetrics {
 
   private getEventAttributes(): {[index: string]: any} {
     const clientAttributes = this.attributeProvider() as { [index: string]: any}
-    const result: { [index: string]: string } = {
-      guid: this.guid,
-      'application.version': this.applicationVersion,
-      'application.session': this.sessionId!,
-      'uname.sysname': this.userAgent,
-    }
+    const result: { [index: string]: string } = {};
 
     for (const attributeName in clientAttributes) {
       if (Object.prototype.hasOwnProperty.call(clientAttributes, attributeName)) {
@@ -179,7 +165,10 @@ export class BacktraceMetrics {
         const elementType = typeof(element);
         
         if(elementType === 'string' || elementType === 'boolean' || elementType === 'number') {
-          result[attributeName] = element.toString();
+          const attributeValue = element.toString();
+          if(attributeValue){
+            result[attributeName] = attributeValue;
+          }
         }
       }
     }
