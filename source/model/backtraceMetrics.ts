@@ -1,14 +1,13 @@
 import { BacktraceClientOptions } from '..';
-import { BacktraceReport } from './backtraceReport'
+import { SEC_TO_MILLIS } from '../consts';
+import { APP_NAME, USER_AGENT, VERSION } from '../consts/application';
 import {
   currentTimestamp,
   getBacktraceGUID,
   getEndpointParams,
   post,
-  uuid,
+  uuid
 } from '../utils';
-import { APP_NAME, USER_AGENT, VERSION } from '../consts/application';
-import { SEC_TO_MILLIS } from '../consts';
 
 /**
  * Handles Backtrace Metrics.
@@ -38,7 +37,7 @@ export class BacktraceMetrics {
 
   constructor(
     configuration: BacktraceClientOptions,
-    hostname = 'https://events.backtrace.io',
+    private readonly attributeProvider: () => object
   ) {
     if (!configuration.endpoint) {
       throw new Error(`Backtrace: missing 'endpoint' option.`);
@@ -60,7 +59,7 @@ export class BacktraceMetrics {
     this.universe = universe;
     this.token = (configuration.token || token) as string;
     this.timeout = configuration.timeout;
-    this.hostname = hostname;
+    this.hostname = configuration.metricsSubmissionUrl ?? 'https://events.backtrace.io';
 
     this.summedEndpoint = `${this.hostname}/api/unique-events/submit?universe=${this.universe}&token=${this.token}`;
     this.uniqueEndpoint = `${this.hostname}/api/summed-events/submit?universe=${this.universe}&token=${this.token}`;
@@ -131,14 +130,16 @@ export class BacktraceMetrics {
       },
       unique_events: [
         {
+          ...{
           timestamp: currentTimestamp(),
-          attributes: this.eventAttributes,
           unique: ['guid'],
         },
+        ...this.getEventAttributes()
+      },
       ],
     };
 
-    await post(this.summedEndpoint, payload);
+    await post(this.uniqueEndpoint, payload);
   }
 
   /**
@@ -164,20 +165,25 @@ export class BacktraceMetrics {
   }
 
   private getEventAttributes(): {[index: string]: any} {
-    const reportAttributes = new BacktraceReport().toJson();
-    return {
+    const clientAttributes = this.attributeProvider() as { [index: string]: any}
+    const result: { [index: string]: string } = {
       guid: this.guid,
       'application.version': this.applicationVersion,
-      'application.session': this.sessionId,
+      'application.session': this.sessionId!,
       'uname.sysname': this.userAgent,
-      annotations: reportAttributes.annotations,
-      classifiers: reportAttributes.classifiers,
-      lang: reportAttributes.lang,
-      langVersion: reportAttributes.langVersion,
-      mainThread: reportAttributes.mainThread,
-      threads: reportAttributes.threads,
-      uuid: reportAttributes.uuid,
     }
+
+    for (const attributeName in clientAttributes) {
+      if (Object.prototype.hasOwnProperty.call(clientAttributes, attributeName)) {
+        const element = clientAttributes[attributeName];
+        const elementType = typeof(element);
+        
+        if(elementType === 'string' || elementType === 'boolean' || elementType === 'number') {
+          result[attributeName] = element.toString();
+        }
+      }
+    }
+    return result;
   }
 
   /**

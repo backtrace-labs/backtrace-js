@@ -1,8 +1,8 @@
 import { BacktraceApi } from './backtraceApi';
-import { BacktraceMetrics } from './model/backtraceMetrics';
 import { ClientRateLimit } from './clientRateLimit';
 import { pageStartTime } from './index';
 import { BacktraceClientOptions } from './model/backtraceClientOptions';
+import { BacktraceMetrics } from './model/backtraceMetrics';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
 import { Breadcrumbs } from './model/breadcrumbs';
@@ -10,7 +10,7 @@ import {
   getBrowserName,
   getBrowserVersion,
   getOs,
-  isMobile,
+  isMobile
 } from './utils/agentUtils';
 declare const __VERSION__: string;
 
@@ -41,13 +41,17 @@ export class BacktraceClient {
     );
     this._clientRateLimit = new ClientRateLimit(this.options.rateLimit);
     this.registerHandlers();
-    this.attributes = {
-      ...this.readAttributes(),
-      ...this.options.userAttributes,
-    };
-    this._backtraceMetrics = new BacktraceMetrics(clientOptions);
+    
+    this.attributes = this.getClientAttributes();
+    this._backtraceMetrics = new BacktraceMetrics(clientOptions, () => { return this.getClientAttributes()});
   }
 
+  private getClientAttributes(){
+    return {
+      ...this.readAttributes(),
+      ...this.options.userAttributes,
+    }
+  }
   /**
    * Memorize selected values from application.
    * Memorized attributes will be available in your Backtrace report.
