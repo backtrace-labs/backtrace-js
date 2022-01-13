@@ -1,15 +1,5 @@
 import { getEndpointParams } from '../source/utils';
 
-declare global {
-  namespace NodeJS {
-    interface Global {
-      document: Document;
-      window: Window;
-      navigator: Navigator;
-    }
-  }
-}
-
 describe('Test Submission URL information in metrics support', () => {
   describe('Test universe name', () => {
     it('Test submit.backtrace.io universe name', () => {
@@ -20,7 +10,7 @@ describe('Test Submission URL information in metrics support', () => {
 
       const params = getEndpointParams(testSubmissionUrl);
       if (!params) {
-        fail(
+        throw new Error(
           `Invalid test case - the test submission URL ${testSubmissionUrl} is invalid for current test`,
         );
       }

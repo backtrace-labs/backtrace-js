@@ -75,7 +75,7 @@ export class BacktraceMetrics {
     }
     // Start new interval.
     // Persist session if page is focused on heartbeat interval
-    const intervalId = setInterval(
+    const intervalId : ReturnType<typeof setInterval> | undefined = setInterval(
       () => this.persistIfFocused(),
       this.heartbeatInterval,
     );
@@ -244,7 +244,11 @@ export class BacktraceMetrics {
   /**
    * Set session active interval id to localStorage.
    */
-  private setActiveSessionIntervalId(intervalId: number): void {
+  private setActiveSessionIntervalId(intervalId: ReturnType<typeof setInterval> | undefined): boolean {
+    if(!intervalId) {
+      return false;
+    }
     localStorage.setItem('activeSessionIntervalId', intervalId.toString());
+    return true;
   }
 }

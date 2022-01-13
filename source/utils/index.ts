@@ -62,15 +62,15 @@ type EndpointParameters = {
  */
 export function getEndpointParams(
   endpoint: string,
-  token?: string,
-  hostname = 'backtrace.io',
+  token?: string
 ): EndpointParameters | undefined {
   if (!endpoint) {
     return undefined;
   }
 
   if (endpoint.indexOf('submit.backtrace.io') !== -1) {
-    const startPosition = endpoint.indexOf('backtrace.io/');
+    const positionFilter = 'backtrace.io/'
+    const startPosition = endpoint.indexOf('backtrace.io/') + positionFilter.length;
     if (startPosition === -1) {
       return undefined;
     }
@@ -84,20 +84,20 @@ export function getEndpointParams(
     );
 
     if (!token) {
-      const lastSeparatorIndex = endpoint.lastIndexOf(
-        '/',
-        indexOfTheEndOfTheUniverseName,
-      );
+      const lastSeparatorIndex = endpoint.lastIndexOf('/');
+      if(lastSeparatorIndex === indexOfTheEndOfTheUniverseName) {
+        return undefined;
+      }
       token = endpoint.substring(
-        indexOfTheEndOfTheUniverseName,
+        indexOfTheEndOfTheUniverseName + 1,
         lastSeparatorIndex,
       );
-      if (!token || token.length !== 65) {
+      if (!token || token.length !== 64) {
         return undefined;
       }
     }
 
-    return { universe: universeName, token: token };
+    return { universe: universeName, token };
   }
 
   const backtraceSubmissionUrl = new URL(endpoint).hostname;
@@ -107,7 +107,7 @@ export function getEndpointParams(
     return undefined;
   }
   return {
-    token: token,
+    token,
     universe: backtraceSubmissionUrl.substring(0, firstSeparatorIndex),
   };
 }
