@@ -44,7 +44,7 @@ export class BacktraceClient {
     this.registerHandlers();
 
     this.attributes = this.getClientAttributes();
-    if (clientOptions.enableMetricsSupport) {
+    if (this.options.enableMetricsSupport) {
       this._backtraceMetrics = new BacktraceMetrics(clientOptions, () => {
         return this.getClientAttributes();
       });

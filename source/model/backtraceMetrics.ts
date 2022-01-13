@@ -56,7 +56,7 @@ export class BacktraceMetrics {
     }
 
     this.universe = universe;
-    this.token = (configuration.token || token) as string;
+    this.token = token;
     this.hostname =
       configuration.metricsSubmissionUrl ?? 'https://events.backtrace.io';
 
@@ -68,18 +68,11 @@ export class BacktraceMetrics {
 
     this.persistSession(); // Create/persist session on construction.
 
-    // Get current session interval. If one is set or running, clear it.
-    const currentIntervalId = this.getActiveSessionIntervalId();
-    if (currentIntervalId) {
-      clearInterval(currentIntervalId);
-    }
-    // Start new interval.
     // Persist session if page is focused on heartbeat interval
     const intervalId : ReturnType<typeof setInterval> | undefined = setInterval(
       () => this.persistIfFocused(),
       this.heartbeatInterval,
     );
-    this.setActiveSessionIntervalId(intervalId);
   }
 
   /**
@@ -239,16 +232,5 @@ export class BacktraceMetrics {
   private setLastActive(time = this.timestamp): void {
     this.lastActive = time;
     localStorage.setItem('lastActive', time.toString());
-  }
-
-  /**
-   * Set session active interval id to localStorage.
-   */
-  private setActiveSessionIntervalId(intervalId: ReturnType<typeof setInterval> | undefined): boolean {
-    if(!intervalId) {
-      return false;
-    }
-    localStorage.setItem('activeSessionIntervalId', intervalId.toString());
-    return true;
   }
 }
