@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@types/jest": "^27.0.3",
+    "@types/jsdom": "^16.2.14",
     "fork-ts-checker-webpack-plugin": "^1.4.3",
     "jest": "^27.4.5",
     "jsdom": "^19.0.0",
