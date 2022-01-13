@@ -62,16 +62,53 @@ type EndpointParameters = {
  */
 export function getEndpointParams(
   endpoint: string,
+  token?: string,
   hostname = 'backtrace.io',
-): EndpointParameters {
-  const regex = new RegExp(
-    `${hostname}\/([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_+=]+)\/`,
-  );
-  const match = endpoint.match(regex);
+): EndpointParameters | undefined {
+  if (!endpoint) {
+    return undefined;
+  }
 
+  if (endpoint.indexOf('submit.backtrace.io') !== -1) {
+    const startPosition = endpoint.indexOf('backtrace.io/');
+    if (startPosition === -1) {
+      return undefined;
+    }
+    const indexOfTheEndOfTheUniverseName = endpoint.indexOf('/', startPosition);
+    if (indexOfTheEndOfTheUniverseName === -1) {
+      return undefined;
+    }
+    const universeName = endpoint.substring(
+      startPosition,
+      indexOfTheEndOfTheUniverseName,
+    );
+
+    if (!token) {
+      const lastSeparatorIndex = endpoint.lastIndexOf(
+        '/',
+        indexOfTheEndOfTheUniverseName,
+      );
+      token = endpoint.substring(
+        indexOfTheEndOfTheUniverseName,
+        lastSeparatorIndex,
+      );
+      if (!token || token.length !== 65) {
+        return undefined;
+      }
+    }
+
+    return { universe: universeName, token: token };
+  }
+
+  const backtraceSubmissionUrl = new URL(endpoint).hostname;
+  const firstSeparatorIndex = backtraceSubmissionUrl.indexOf('.');
+  // unvalid submission URL
+  if (firstSeparatorIndex === -1) {
+    return undefined;
+  }
   return {
-    universe: match?.[1],
-    token: match?.[2],
+    token: token,
+    universe: backtraceSubmissionUrl.substring(0, firstSeparatorIndex),
   };
 }
 

@@ -11,7 +11,7 @@ import {
   getBrowserName,
   getBrowserVersion,
   getOs,
-  isMobile
+  isMobile,
 } from './utils/agentUtils';
 declare const __VERSION__: string;
 
@@ -24,7 +24,7 @@ export class BacktraceClient {
   public readonly attributes: { [index: string]: any };
 
   private _backtraceApi: BacktraceApi;
-  public readonly _backtraceMetrics: BacktraceMetrics;
+  public readonly _backtraceMetrics: BacktraceMetrics | undefined;
   private _clientRateLimit: ClientRateLimit;
 
   constructor(clientOptions: BacktraceClientOptions) {
@@ -42,16 +42,20 @@ export class BacktraceClient {
     );
     this._clientRateLimit = new ClientRateLimit(this.options.rateLimit);
     this.registerHandlers();
-    
+
     this.attributes = this.getClientAttributes();
-    this._backtraceMetrics = new BacktraceMetrics(clientOptions, () => { return this.getClientAttributes()});
+    if (clientOptions.enableMetricsSupport) {
+      this._backtraceMetrics = new BacktraceMetrics(clientOptions, () => {
+        return this.getClientAttributes();
+      });
+    }
   }
 
-  private getClientAttributes(){
+  private getClientAttributes() {
     return {
       ...this.readAttributes(),
       ...this.options.userAttributes,
-    }
+    };
   }
   /**
    * Memorize selected values from application.
