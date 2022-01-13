@@ -238,7 +238,7 @@ export class BacktraceClient {
 
     if (!this.options.token) {
       throw new Error(
-        'Token is required if Backtrace-js have to build url to Backtrace',
+        'Token configuration option is required for this type of submission url.',
       );
     }
     const uriSeparator = url.endsWith('/') ? '' : '/';
