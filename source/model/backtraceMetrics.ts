@@ -1,12 +1,7 @@
 import { BacktraceClientOptions } from '..';
 import { SEC_TO_MILLIS } from '../consts';
 import { APP_NAME, USER_AGENT, VERSION } from '../consts/application';
-import {
-  currentTimestamp,
-  getEndpointParams,
-  post,
-  uuid
-} from '../utils';
+import { currentTimestamp, getEndpointParams, post, uuid } from '../utils';
 
 /**
  * Handles Backtrace Metrics.
@@ -32,12 +27,21 @@ export class BacktraceMetrics {
 
   constructor(
     configuration: BacktraceClientOptions,
-    private readonly attributeProvider: () => object
+    private readonly attributeProvider: () => object,
   ) {
     if (!configuration.endpoint) {
       throw new Error(`Backtrace: missing 'endpoint' option.`);
     }
-    const { universe, token } = getEndpointParams(configuration.endpoint);
+    const endpointParameters = getEndpointParams(
+      configuration.endpoint,
+      configuration.token,
+    );
+    if (!endpointParameters) {
+      throw new Error(
+        `Invalid Backtrace submission parameters. Cannot create a submission URL to metrics support`,
+      );
+    }
+    const { universe, token } = endpointParameters;
 
     if (!universe) {
       throw new Error(
@@ -45,15 +49,16 @@ export class BacktraceMetrics {
       );
     }
 
-    if (!token && !configuration.token) {
+    if (!token) {
       throw new Error(
         `Backtrace: missing 'token' option or it could not be parsed from the endpoint.`,
       );
     }
 
     this.universe = universe;
-    this.token = (configuration.token || token) as string;
-    this.hostname = configuration.metricsSubmissionUrl ?? 'https://events.backtrace.io';
+    this.token = token;
+    this.hostname =
+      configuration.metricsSubmissionUrl ?? 'https://events.backtrace.io';
 
     this.summedEndpoint = `${this.hostname}/api/summed-events/submit?universe=${this.universe}&token=${this.token}`;
     this.uniqueEndpoint = `${this.hostname}/api/unique-events/submit?universe=${this.universe}&token=${this.token}`;
@@ -63,18 +68,11 @@ export class BacktraceMetrics {
 
     this.persistSession(); // Create/persist session on construction.
 
-    // Get current session interval. If one is set or running, clear it.
-    const currentIntervalId = this.getActiveSessionIntervalId();
-    if (currentIntervalId) {
-      clearInterval(currentIntervalId);
-    }
-    // Start new interval.
     // Persist session if page is focused on heartbeat interval
-    const intervalId = setInterval(
+    const intervalId: ReturnType<typeof setInterval> | undefined = setInterval(
       () => this.persistIfFocused(),
       this.heartbeatInterval,
     );
-    this.setActiveSessionIntervalId(intervalId);
   }
 
   /**
@@ -93,7 +91,7 @@ export class BacktraceMetrics {
       // if lastActive is not defined, the page was just launched; use current timestamp as lastActive.
     } else if (
       (this.lastActive || this.timestamp) <
-      this.timestamp - (this.persistenceInterval / SEC_TO_MILLIS)
+      this.timestamp - this.persistenceInterval / SEC_TO_MILLIS
     ) {
       this.createNewSession();
       this.sendUniqueEvent();
@@ -155,18 +153,26 @@ export class BacktraceMetrics {
     await post(this.summedEndpoint, payload);
   }
 
-  private getEventAttributes(): {[index: string]: any} {
-    const clientAttributes = this.attributeProvider() as { [index: string]: any}
+  private getEventAttributes(): { [index: string]: any } {
+    const clientAttributes = this.attributeProvider() as {
+      [index: string]: any;
+    };
     const result: { [index: string]: string } = {};
 
     for (const attributeName in clientAttributes) {
-      if (Object.prototype.hasOwnProperty.call(clientAttributes, attributeName)) {
+      if (
+        Object.prototype.hasOwnProperty.call(clientAttributes, attributeName)
+      ) {
         const element = clientAttributes[attributeName];
-        const elementType = typeof(element);
-        
-        if(elementType === 'string' || elementType === 'boolean' || elementType === 'number') {
+        const elementType = typeof element;
+
+        if (
+          elementType === 'string' ||
+          elementType === 'boolean' ||
+          elementType === 'number'
+        ) {
           const attributeValue = element.toString();
-          if(attributeValue){
+          if (attributeValue) {
             result[attributeName] = attributeValue;
           }
         }
@@ -226,12 +232,5 @@ export class BacktraceMetrics {
   private setLastActive(time = this.timestamp): void {
     this.lastActive = time;
     localStorage.setItem('lastActive', time.toString());
-  }
-
-  /**
-   * Set session active interval id to localStorage.
-   */
-  private setActiveSessionIntervalId(intervalId: number): void {
-    localStorage.setItem('activeSessionIntervalId', intervalId.toString());
   }
 }

@@ -1,5 +1,8 @@
 # Backtrace JS Release Notes
 
+## Version 1.1.0
+- Backtrace-Metrics support - by default metrics support is enabled. User can modify the metrics support via `BacktraceConfiguration` options.  
+
 ## Version 1.0.2
 - Provide file name instead of full file path in the stack trace object.
 
