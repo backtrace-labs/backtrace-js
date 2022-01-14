@@ -62,15 +62,16 @@ type EndpointParameters = {
  */
 export function getEndpointParams(
   endpoint: string,
-  token?: string
+  token?: string,
 ): EndpointParameters | undefined {
   if (!endpoint) {
     return undefined;
   }
 
   if (endpoint.indexOf('submit.backtrace.io') !== -1) {
-    const positionFilter = 'backtrace.io/'
-    const startPosition = endpoint.indexOf('backtrace.io/') + positionFilter.length;
+    const positionFilter = 'backtrace.io/';
+    const startPosition =
+      endpoint.indexOf('backtrace.io/') + positionFilter.length;
     if (startPosition === -1) {
       return undefined;
     }
@@ -85,7 +86,7 @@ export function getEndpointParams(
 
     if (!token) {
       const lastSeparatorIndex = endpoint.lastIndexOf('/');
-      if(lastSeparatorIndex === indexOfTheEndOfTheUniverseName) {
+      if (lastSeparatorIndex === indexOfTheEndOfTheUniverseName) {
         return undefined;
       }
       token = endpoint.substring(

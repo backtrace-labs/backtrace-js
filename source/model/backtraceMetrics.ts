@@ -69,7 +69,7 @@ export class BacktraceMetrics {
     this.persistSession(); // Create/persist session on construction.
 
     // Persist session if page is focused on heartbeat interval
-    const intervalId : ReturnType<typeof setInterval> | undefined = setInterval(
+    const intervalId: ReturnType<typeof setInterval> | undefined = setInterval(
       () => this.persistIfFocused(),
       this.heartbeatInterval,
     );
