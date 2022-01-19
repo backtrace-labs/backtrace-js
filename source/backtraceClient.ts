@@ -324,7 +324,7 @@ export class BacktraceClient {
       'window.screenY': window.screenY,
       'window.screenLeft': window.screenLeft,
       'window.screenTop': window.screenTop,
-      'backtrace.version': __VERSION__,
+      'application.version': __VERSION__,
       guid: getBacktraceGUID(),
     };
   }

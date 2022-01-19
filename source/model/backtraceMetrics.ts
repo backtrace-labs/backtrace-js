@@ -157,7 +157,9 @@ export class BacktraceMetrics {
     const clientAttributes = this.attributeProvider() as {
       [index: string]: any;
     };
-    const result: { [index: string]: string } = {};
+    const result: { [index: string]: string } = {
+      'application.session': this.sessionId || ''
+    };
 
     for (const attributeName in clientAttributes) {
       if (
@@ -202,26 +204,10 @@ export class BacktraceMetrics {
   }
 
   /**
-   * Get stored time since last session created or current time
-   */
-  private getSessionStart(): number | undefined {
-    const sessionStartStr = localStorage.getItem('sessionStart');
-    return sessionStartStr ? parseInt(sessionStartStr, 10) : undefined;
-  }
-
-  /**
    * Get stored time since last page navigation or current time
    */
   private getLastActive(): number | undefined {
     const lastActiveStr = localStorage.getItem('lastActive');
-    return lastActiveStr ? parseInt(lastActiveStr, 10) : undefined;
-  }
-
-  /**
-   * Get stored session active interval id.
-   */
-  private getActiveSessionIntervalId(): number | undefined {
-    const lastActiveStr = localStorage.getItem('activeSessionIntervalId');
     return lastActiveStr ? parseInt(lastActiveStr, 10) : undefined;
   }
 
