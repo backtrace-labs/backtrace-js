@@ -158,7 +158,7 @@ export class BacktraceMetrics {
       [index: string]: any;
     };
     const result: { [index: string]: string } = {
-      'application.session': this.sessionId || ''
+      'application.session': this.sessionId as string
     };
 
     for (const attributeName in clientAttributes) {
