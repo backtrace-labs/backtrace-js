@@ -15,9 +15,8 @@ export class BacktraceMetrics {
   private readonly heartbeatInterval: number = 60000; // One minutes in milliseconds.
 
   private readonly timestamp = currentTimestamp();
-  private readonly userAgent = USER_AGENT;
-  private readonly applicationName = APP_NAME;
-  private readonly applicationVersion = VERSION;
+  private readonly applicationName: string = '';
+  private readonly applicationVersion: string = '';
 
   private summedEndpoint: string;
   private uniqueEndpoint: string;
@@ -62,6 +61,13 @@ export class BacktraceMetrics {
 
     this.summedEndpoint = `${this.hostname}/api/summed-events/submit?universe=${this.universe}&token=${this.token}`;
     this.uniqueEndpoint = `${this.hostname}/api/unique-events/submit?universe=${this.universe}&token=${this.token}`;
+
+    // get application name from attributes.
+    this.applicationName = this.getEventAttributes()?.application || '';
+    // application version is not well defined for simple browser/js apps.
+    // if application.version is provided in attributes, use it.
+    this.applicationName =
+      this.getEventAttributes()?.['application.version'] || '';
 
     // Get current sessionId. If it is not defined, create new session and "Launch Application"
     const currentSessionId = this.getSessionId();
