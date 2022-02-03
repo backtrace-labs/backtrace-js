@@ -1,6 +1,5 @@
 import { BacktraceClientOptions } from '..';
 import { SEC_TO_MILLIS } from '../consts';
-import { APP_NAME, USER_AGENT, VERSION } from '../consts/application';
 import { currentTimestamp, getEndpointParams, post, uuid } from '../utils';
 
 /**
@@ -15,14 +14,11 @@ export class BacktraceMetrics {
   private readonly heartbeatInterval: number = 60000; // One minutes in milliseconds.
 
   private readonly timestamp = currentTimestamp();
-  private readonly userAgent = USER_AGENT;
-  private readonly applicationName = APP_NAME;
-  private readonly applicationVersion = VERSION;
 
   private summedEndpoint: string;
   private uniqueEndpoint: string;
 
-  private sessionId;
+  private sessionId: string;
   private lastActive;
 
   constructor(
@@ -63,7 +59,16 @@ export class BacktraceMetrics {
     this.summedEndpoint = `${this.hostname}/api/summed-events/submit?universe=${this.universe}&token=${this.token}`;
     this.uniqueEndpoint = `${this.hostname}/api/unique-events/submit?universe=${this.universe}&token=${this.token}`;
 
-    this.sessionId = this.getSessionId();
+    // Get current sessionId. If it is not defined, create new session and "Launch Application"
+    const currentSessionId = this.getSessionId();
+    if (currentSessionId) {
+      this.sessionId = currentSessionId;
+    } else {
+      this.sessionId = this.createNewSession();
+      this.sendUniqueEvent();
+      // An "application launch" loosely / temporarily means first session creation.
+      this.sendSummedEvent('Application Launches');
+    }
     this.lastActive = this.getLastActive();
 
     this.persistSession(); // Create/persist session on construction.
@@ -80,16 +85,7 @@ export class BacktraceMetrics {
    * when appropriate.
    */
   private persistSession(): void {
-    // If sessionId is not set, create new session. Send unique and app launch events.
-    if (!this.sessionId) {
-      this.createNewSession();
-      this.sendUniqueEvent();
-      // An "application launch" loosely / temporarily means first session creation.
-      this.sendSummedEvent('Application Launches');
-
-      // If sessionId is set and lastActive is over persistenceInterval, create new session and send unique event.
-      // if lastActive is not defined, the page was just launched; use current timestamp as lastActive.
-    } else if (
+    if (
       (this.lastActive || this.timestamp) <
       this.timestamp - this.persistenceInterval / SEC_TO_MILLIS
     ) {
@@ -113,9 +109,11 @@ export class BacktraceMetrics {
    * Send POST to unique-events API endpoint
    */
   public async sendUniqueEvent(): Promise<void> {
+    const attributes = this.getEventAttributes();
+
     const payload = {
-      application: this.applicationName,
-      appversion: this.applicationVersion,
+      application: attributes.application,
+      appversion: attributes['application.version'],
       metadata: {
         dropped_events: 0,
       },
@@ -135,9 +133,11 @@ export class BacktraceMetrics {
    * Send POST to summed-events API endpoint
    */
   public async sendSummedEvent(metricGroup: string): Promise<void> {
+    const attributes = this.getEventAttributes();
+
     const payload = {
-      application: this.applicationName,
-      appversion: this.applicationVersion,
+      application: attributes.application,
+      appversion: attributes['application.version'],
       metadata: {
         dropped_events: 0,
       },
@@ -157,7 +157,10 @@ export class BacktraceMetrics {
     const clientAttributes = this.attributeProvider() as {
       [index: string]: any;
     };
-    const result: { [index: string]: string } = {};
+    const result: { [index: string]: string } = {
+      'application.session': this.sessionId,
+      'application.version': 'unknown', // This will be overwritten if application.version is provided in clientAtrributes.
+    };
 
     for (const attributeName in clientAttributes) {
       if (
@@ -182,14 +185,13 @@ export class BacktraceMetrics {
   }
 
   /**
-   * Create new sessionId and set local sessionId and sessionStart.
+   * Create new sessionId and set local sessionId.
    */
   private createNewSession(): string {
     const newSessionId = uuid();
     this.sessionId = newSessionId;
     this.lastActive = this.timestamp;
     localStorage.setItem('sessionId', newSessionId);
-    localStorage.setItem('sessionStart', this.timestamp.toString());
     this.setLastActive(this.timestamp);
     return newSessionId;
   }
@@ -202,26 +204,10 @@ export class BacktraceMetrics {
   }
 
   /**
-   * Get stored time since last session created or current time
-   */
-  private getSessionStart(): number | undefined {
-    const sessionStartStr = localStorage.getItem('sessionStart');
-    return sessionStartStr ? parseInt(sessionStartStr, 10) : undefined;
-  }
-
-  /**
    * Get stored time since last page navigation or current time
    */
   private getLastActive(): number | undefined {
     const lastActiveStr = localStorage.getItem('lastActive');
-    return lastActiveStr ? parseInt(lastActiveStr, 10) : undefined;
-  }
-
-  /**
-   * Get stored session active interval id.
-   */
-  private getActiveSessionIntervalId(): number | undefined {
-    const lastActiveStr = localStorage.getItem('activeSessionIntervalId');
     return lastActiveStr ? parseInt(lastActiveStr, 10) : undefined;
   }
 

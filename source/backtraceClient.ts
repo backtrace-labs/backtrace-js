@@ -290,7 +290,7 @@ export class BacktraceClient {
   private readAttributes(): { [index: string]: any } {
     const browserName = getBrowserName();
     return {
-      application: document.title,
+      application: document.title || 'unknown', // application is required. Using unknown string if it is not found.
       'process.age': Math.floor(
         (new Date().getTime() - pageStartTime.getTime()) / 1000,
       ),
