@@ -16,5 +16,5 @@
       "@src/*": ["./source/*"]
     }
   },
-  "exclude": ["lib", "./test", "./examples"]
+  "exclude": ["lib", "./tests", "./examples"]
 }
