@@ -1,6 +1,7 @@
+import { BacktraceApi } from '@src/backtraceApi';
 import { BacktraceClientOptions } from '..';
 import { SEC_TO_MILLIS } from '../consts';
-import { currentTimestamp, getEndpointParams, post, uuid } from '../utils';
+import { currentTimestamp, getEndpointParams, uuid } from '../utils';
 
 /**
  * Handles Backtrace Metrics.
@@ -9,9 +10,11 @@ export class BacktraceMetrics {
   private readonly universe: string;
   private readonly token: string;
   private readonly hostname: string;
+  // Thirty minutes in milliseconds.
+  private readonly persistenceInterval: number = 1800000;
 
-  private readonly persistenceInterval: number = 1800000; // Thirty minutes in milliseconds.
-  private readonly heartbeatInterval: number = 60000; // One minutes in milliseconds.
+  // One minutes in milliseconds.
+  private readonly heartbeatInterval: number = 60000;
 
   private readonly timestamp = currentTimestamp();
 
@@ -23,6 +26,7 @@ export class BacktraceMetrics {
 
   constructor(
     configuration: BacktraceClientOptions,
+    private readonly _backtraceApi: BacktraceApi,
     private readonly attributeProvider: () => object,
   ) {
     if (!configuration.endpoint) {
@@ -126,7 +130,7 @@ export class BacktraceMetrics {
       ],
     };
 
-    await post(this.uniqueEndpoint, payload);
+    await this._backtraceApi.sendMetrics(this.uniqueEndpoint, payload);
   }
 
   /**
@@ -150,7 +154,7 @@ export class BacktraceMetrics {
       ],
     };
 
-    await post(this.summedEndpoint, payload);
+    await this._backtraceApi.sendMetrics(this.summedEndpoint, payload);
   }
 
   private getEventAttributes(): { [index: string]: any } {

@@ -1,5 +1,9 @@
 # Backtrace JS Release Notes
 
+## Version 1.1.1
+- Fixed Metrics promise rejection when the metrics service is not available
+- Fixed index.ts type definition - now it's correctly included in the final npm package.
+
 ## Version 1.1.0
 - Backtrace-Metrics support - by default metrics support is enabled. User can modify the metrics support via `BacktraceConfiguration` options.  
 

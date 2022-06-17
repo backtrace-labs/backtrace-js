@@ -8,10 +8,9 @@ export class BacktraceApi {
   ) {}
 
   public async send(report: BacktraceReport): Promise<BacktraceResult> {
-    try {
-      const formData = report.toFormData();
-
-      return new Promise<BacktraceResult>((res, rej) => {
+    return new Promise<BacktraceResult>((res) => {
+      try {
+        const formData = report.toFormData();
         const xmlHttpRequest = new XMLHttpRequest();
         xmlHttpRequest.timeout = this._timeout;
         xmlHttpRequest.open('POST', this._backtraceUri, true);
@@ -40,12 +39,46 @@ export class BacktraceApi {
           }
         };
 
-        xmlHttpRequest.onerror = (e) => {
-          rej(e);
+        xmlHttpRequest.onerror = (e: ProgressEvent) => {
+          res(
+            BacktraceResult.OnError(
+              report,
+              e instanceof ErrorEvent ? e.error : new Error('unknown error'),
+            ),
+          );
         };
-      });
-    } catch (err) {
-      return BacktraceResult.OnError(report, err as Error);
-    }
+      } catch (err) {
+        return BacktraceResult.OnError(report, err as Error);
+      }
+    });
+  }
+
+  public sendMetrics(
+    url: string,
+    data: Record<string, unknown>,
+  ): Promise<boolean> {
+    return new Promise<boolean>((res) => {
+      try {
+        const xmlHttpRequest = new XMLHttpRequest();
+        xmlHttpRequest.timeout = this._timeout;
+        xmlHttpRequest.open('POST', url, true);
+        xmlHttpRequest.setRequestHeader('Content-type', 'application/json');
+        xmlHttpRequest.send(JSON.stringify(data));
+        xmlHttpRequest.onload = () => {
+          if (xmlHttpRequest.readyState === XMLHttpRequest.DONE) {
+            if (xmlHttpRequest.status === 200) {
+              return res(true);
+            }
+            return res(false);
+          }
+        };
+
+        xmlHttpRequest.onerror = () => {
+          res(false);
+        };
+      } catch (err) {
+        return Promise.resolve(false);
+      }
+    });
   }
 }
