@@ -13,7 +13,7 @@ export { BacktraceReport as BtReport } from './model/backtraceReport';
 
 export const pageStartTime = new Date();
 
-let backtraceClient: BacktraceClient;
+let backtraceClient: BacktraceClient | undefined;
 
 /**
  * Initalize Backtrace Client and Backtrace node integration
@@ -38,28 +38,32 @@ export function use(client: BacktraceClient) {
 }
 /**
  * Send report asynchronously to Backtrace
- * @param arg report payload
- * @param arg2 attributes
+ * @param payload report payload
+ * @param attributes attributes
  * @param attachment client-provided info sent as attachment with report
  */
 export async function report(
-  arg: () => void | Error | string | object,
-  arg2: object | undefined = {},
+  payload: (() => void) | Error | string | object,
+  attributes: object | undefined = {},
   attachment?: string | object,
 ): Promise<BacktraceResult> {
   if (!backtraceClient) {
     throw new Error('Must call initialize method first');
   }
   let data: Error | string = '';
-  if (arg instanceof Error || typeof arg === 'string') {
-    data = arg;
+  if (payload instanceof Error || typeof payload === 'string') {
+    data = payload;
   }
-  if (typeof arg === 'object' && arg2 === {}) {
-    arg2 = arg;
+  if (typeof payload === 'object' && attributes === {}) {
+    attributes = payload;
   }
-  const result = await backtraceClient.reportAsync(data, arg2, attachment);
-  if (arg instanceof Function) {
-    arg();
+  const result = await backtraceClient.reportAsync(
+    data,
+    attributes,
+    attachment,
+  );
+  if (payload instanceof Function) {
+    payload();
   }
   return result;
 }
@@ -95,12 +99,13 @@ export function BacktraceReport(): btReport.BacktraceReport {
   if (!backtraceClient) {
     throw new Error('Must call initialize method first');
   }
+  const client = backtraceClient;
   const backtraceReport = backtraceClient.createReport('');
   backtraceReport.send = (callback: (err?: Error) => void) => {
-    backtraceClient.sendReport(backtraceReport, callback);
+    client.sendReport(backtraceReport, callback);
   };
   backtraceReport.sendSync = (callback: (err?: Error) => void) => {
-    backtraceClient.sendReport(backtraceReport, callback);
+    client.sendReport(backtraceReport, callback);
   };
 
   return backtraceReport;
