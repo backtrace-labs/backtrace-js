@@ -70,8 +70,8 @@ export async function report(
 
 /**
  * Send report synchronosuly to Backtrace
- * @param error report payload
- * @param reportAttributes attributes
+ * @param data report payload
+ * @param attributes attributes
  * @param attachment client-provided info sent as attachment with report
  */
 export function reportSync(

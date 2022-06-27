@@ -62,18 +62,15 @@ export class BacktraceClientOptions implements IBacktraceClientOptions {
   public metricsSubmissionUrl?: string;
 
   /**
-   * @deprecated
-   * Please don't use this option anymore
+   * @deprecated This option is not used anymore and has been left only for backwards compatibility. Please don't use this option anymore.
    */
   public debugBacktrace?: boolean = false;
   /**
-   * @deprecated
-   * Please don't use this option anymore
+   * @deprecated This option is not used anymore and has been left only for backwards compatibility. Please don't use this option anymore.
    */
   public tabWidth: number = 8;
   /**
-   * @deprecated
-   * Please don't use this option anymore
+   * @deprecated This option is not used anymore and has been left only for backwards compatibility. Please don't use this option anymore.
    */
   public contextLineCount: number = 200;
 }
