@@ -1,10 +1,14 @@
 import { BacktraceClient } from './backtraceClient';
-import { BacktraceClientOptions } from './model/backtraceClientOptions';
+import { InitBacktraceClientOptions } from './model/backtraceClientOptions';
 import * as btReport from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
 
 export { BacktraceClient } from './backtraceClient';
-export { BacktraceClientOptions } from './model/backtraceClientOptions';
+export {
+  BacktraceClientOptions,
+  IBacktraceClientOptions,
+  InitBacktraceClientOptions,
+} from './model/backtraceClientOptions';
 export { BacktraceReport as BtReport } from './model/backtraceReport';
 
 export const pageStartTime = new Date();
@@ -16,7 +20,7 @@ let backtraceClient: BacktraceClient;
  * @param configuration Backtrace configuration
  */
 export function initialize(
-  configuration: BacktraceClientOptions,
+  configuration: InitBacktraceClientOptions,
 ): BacktraceClient {
   backtraceClient = new BacktraceClient(configuration);
   return backtraceClient;

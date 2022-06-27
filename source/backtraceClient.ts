@@ -1,7 +1,11 @@
 import { BacktraceApi } from './backtraceApi';
 import { ClientRateLimit } from './clientRateLimit';
 import { pageStartTime } from './index';
-import { BacktraceClientOptions } from './model/backtraceClientOptions';
+import {
+  BacktraceClientOptions,
+  IBacktraceClientOptions,
+  InitBacktraceClientOptions,
+} from './model/backtraceClientOptions';
 import { BacktraceMetrics } from './model/backtraceMetrics';
 import { BacktraceReport } from './model/backtraceReport';
 import { BacktraceResult } from './model/backtraceResult';
@@ -19,7 +23,7 @@ declare const __VERSION__: string;
  * Backtrace client
  */
 export class BacktraceClient {
-  public options: BacktraceClientOptions;
+  public options: IBacktraceClientOptions;
   public breadcrumbs: Breadcrumbs;
   public readonly attributes: { [index: string]: any };
 
@@ -27,14 +31,11 @@ export class BacktraceClient {
   public readonly _backtraceMetrics: BacktraceMetrics | undefined;
   private _clientRateLimit: ClientRateLimit;
 
-  constructor(clientOptions: BacktraceClientOptions) {
+  constructor(clientOptions: InitBacktraceClientOptions) {
     if (!clientOptions.endpoint) {
       throw new Error(`Backtrace: missing 'endpoint' option.`);
     }
-    this.options = {
-      ...new BacktraceClientOptions(),
-      ...clientOptions,
-    } as BacktraceClientOptions;
+    this.options = this.getOptionsWithDefaults(clientOptions);
     this.breadcrumbs = new Breadcrumbs(this.options.breadcrumbLimit);
     this._backtraceApi = new BacktraceApi(
       this.getSubmitUrl(),
@@ -46,7 +47,7 @@ export class BacktraceClient {
     this.attributes = this.getClientAttributes();
     if (this.options.enableMetricsSupport) {
       this._backtraceMetrics = new BacktraceMetrics(
-        clientOptions,
+        this.options,
         this._backtraceApi,
         () => {
           return this.getClientAttributes();
@@ -330,6 +331,15 @@ export class BacktraceClient {
       'window.screenTop': window.screenTop,
       'backtrace.version': __VERSION__,
       guid: getBacktraceGUID(),
+    };
+  }
+
+  private getOptionsWithDefaults(
+    init: InitBacktraceClientOptions,
+  ): IBacktraceClientOptions {
+    return {
+      ...new BacktraceClientOptions(),
+      ...init,
     };
   }
 }
