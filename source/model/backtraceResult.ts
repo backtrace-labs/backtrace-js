@@ -79,7 +79,7 @@ export class BacktraceResult {
   /**
    * Set result when error occurs while sending data to API
    * @param report Executed report
-   * @param error Error
+   * @param err Error
    * @returns  BacktraceResult with exception information
    */
   public static OnError(report: BacktraceReport, err: Error): BacktraceResult {

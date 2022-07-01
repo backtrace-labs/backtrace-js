@@ -1,7 +1,7 @@
 import { BacktraceApi } from '@src/backtraceApi';
-import { BacktraceClientOptions } from '..';
 import { SEC_TO_MILLIS } from '../consts';
 import { currentTimestamp, getEndpointParams, uuid } from '../utils';
+import { IBacktraceClientOptions } from './backtraceClientOptions';
 
 /**
  * Handles Backtrace Metrics.
@@ -25,7 +25,7 @@ export class BacktraceMetrics {
   private lastActive;
 
   constructor(
-    configuration: BacktraceClientOptions,
+    configuration: IBacktraceClientOptions,
     private readonly _backtraceApi: BacktraceApi,
     private readonly attributeProvider: () => object,
   ) {
