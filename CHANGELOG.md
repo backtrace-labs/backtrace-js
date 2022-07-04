@@ -1,5 +1,11 @@
 # Backtrace JS Release Notes
 
+## Version 1.1.3
+- General update.
+
+## Version 1.1.2
+- type definition improvements for the initialized method. 
+
 ## Version 1.1.1
 - Fixed Metrics promise rejection when the metrics service is not available
 - Fixed index.ts type definition - now it's correctly included in the final npm package.
