@@ -1,6 +1,9 @@
-# backtrace-js
+This library has been deprecated and is replaced by https://github.com/backtrace-labs/backtrace-javascript
 
-Backtrace error reporting tool for client-side JavaScript.
+
+# ~backtrace-js~
+
+~Backtrace error reporting tool for client-side JavaScript.~
 
 ## Usage
 
